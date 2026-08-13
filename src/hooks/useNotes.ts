@@ -9,7 +9,7 @@ export function useNotes(campaignId: string) {
 
   const createNote = async (targetCampaignId: string, title: string, type: NoteEntity['type'], content = '') => {
     const combatant = type === 'monster' || type === 'npc';
-    const note: NoteEntity = { id: crypto.randomUUID(), title, type, content, campaignId: targetCampaignId, properties: { hp: combatant ? 10 : undefined, hpMax: combatant ? 10 : undefined, ca: combatant ? 10 : undefined, initiativeBonus: combatant ? 0 : undefined, conditions: [] }, linkedNoteIds: [], createdAt: Date.now(), updatedAt: Date.now() };
+    const note: NoteEntity = { id: crypto.randomUUID(), title, type, content, campaignId: targetCampaignId, properties: { hp: combatant ? 10 : undefined, hpMax: combatant ? 10 : undefined, ca: combatant ? 10 : undefined, initiativeBonus: combatant ? 0 : undefined, conditions: [] }, linkedNoteIds: [], createdAt: Date.now(), updatedAt: Date.now(), isDraft: true };
     await db.notes.add(note);
     return note;
   };

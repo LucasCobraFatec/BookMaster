@@ -1,20 +1,29 @@
 import React from 'react';
-import type { NoteEntity } from '../types/rpg.types';
+import type { CharacterEntity, NoteEntity } from '../types/rpg.types';
 
 interface WikiLinkProps {
   targetTitle: string;
   displayName: string;
   previewNote?: NoteEntity;
+  previewCharacter?: CharacterEntity;
   onLinkClick: (noteTitle: string) => void;
 }
 
 export const WikiLink: React.FC<WikiLinkProps> = ({
   targetTitle,
   displayName,
-  previewNote,
+  previewNote: suppliedPreviewNote,
+  previewCharacter,
   onLinkClick,
 }) => {
-  if (previewNote) {
+  const previewNote = suppliedPreviewNote ?? {
+    title: previewCharacter?.name,
+    content: previewCharacter
+      ? `${previewCharacter.type === 'pc' ? 'Jogador' : previewCharacter.type === 'npc' ? 'NPC' : previewCharacter.type === 'monster' ? 'Monstro' : 'Vilão'} · CA ${previewCharacter.ca} · ${previewCharacter.hp}/${previewCharacter.hpMax} PV`
+      : '',
+  };
+
+  if (suppliedPreviewNote || previewCharacter) {
     return (
       <button
         onClick={() => onLinkClick(targetTitle)}
@@ -22,7 +31,7 @@ export const WikiLink: React.FC<WikiLinkProps> = ({
       >
         {displayName}
         <span className="pointer-events-none absolute bottom-full left-0 z-30 mb-2 hidden w-64 rounded-lg border border-rpg-card bg-rpg-panel p-3 text-left shadow-xl group-hover:block">
-          <span className="mb-1 block text-xs font-bold text-white">{previewNote.title}</span>
+          <span className="mb-1 block text-xs font-bold text-white">{previewNote?.title ?? previewCharacter?.name}</span>
           <span className="block max-h-24 overflow-hidden whitespace-pre-line text-[11px] font-normal leading-relaxed text-rpg-muted">{previewNote.content.slice(0, 220) || 'Nota sem conteúdo.'}</span>
         </span>
       </button>

@@ -24,6 +24,7 @@ export interface NoteEntity {
   linkedNoteIds: string[]; // IDs de notas referenciadas via [[Link]]
   createdAt: number;
   updatedAt: number;
+  isDraft?: boolean;
 }
 
 export interface Campaign {
@@ -52,6 +53,7 @@ export interface SessionTimelineLog {
 
 export interface RollTable {
   id: string;
+  isDraft?: boolean;
   campaignId: string;
   name: string; // Ex: "Tabela de Encontros na Floresta"
   formula: string; // Ex: "1d20" ou "1d100"
@@ -71,6 +73,7 @@ export interface SoundTrack {
 
 export interface CharacterEntity {
   id: string;
+  isDraft?: boolean;
   campaignId: string;
   type: 'pc' | 'npc' | 'monster' | 'villain';
   name: string;
@@ -131,4 +134,59 @@ export interface CharacterEntity {
   feats?: string; // Talentos ou feats
   features?: string; // Características e traços
   equipment?: string; // Equipamentos e moedas
+  playerName?: string;
+  playerSheet?: PlayerSheetData;
+  npcSheet?: NpcSheetData;
+}
+
+export interface NpcSheetData {
+  version: 1;
+  secret: string;
+  size: string;
+  creatureType: string;
+  hitDice: string;
+  savingThrows: Partial<Record<keyof CharacterEntity['attributes'], number>>;
+  passivePerception: number;
+  challengeRating: string;
+  proficiencyBonus: number;
+  traits: string;
+  actions: string;
+  bonusActions: string;
+  reactions: string;
+  vulnerabilities?: string;
+  damageResistances?: string;
+  damageImmunities?: string;
+  conditionImmunities?: string;
+  legendaryActions?: string;
+  legendaryResistance?: string;
+}
+
+export interface PlayerSheetRow { id: string; [key: string]: string | number | boolean; }
+export interface PlayerSheetData {
+  version: 1;
+  shield: boolean;
+  armorBase: number;
+  armorDexCap: number | null;
+  hitDie: number;
+  size: string;
+  passivePerception: number;
+  hitDiceSpent: number;
+  hitDiceMax: number;
+  deathSuccesses: boolean[];
+  deathFailures: boolean[];
+  skills: Record<string, { trained: boolean; bonus: number }>;
+  armorTraining: Record<'light' | 'medium' | 'heavy' | 'shields', boolean>;
+  weaponsTraining: string;
+  toolsTraining: string;
+  classFeatures: string;
+  speciesTraits: string;
+  attacks: PlayerSheetRow[];
+  spellcastingAbility: string;
+  spellcastingModifier: number;
+  spellSaveDc: number;
+  spellAttackBonus: number;
+  spellSlots: Array<{ level: number; max: number; spent: boolean[] }>;
+  spells: PlayerSheetRow[];
+  personality: string;
+  coins: { cp: number; sp: number; gp: number; pp: number };
 }

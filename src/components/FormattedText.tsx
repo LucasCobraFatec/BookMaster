@@ -1,10 +1,11 @@
 import React from 'react';
 import { WikiLink } from './WikiLink';
-import type { NoteEntity } from '../types/rpg.types';
+import type { CharacterEntity, NoteEntity } from '../types/rpg.types';
 
 interface FormattedTextProps {
   text: string;
   existingNotes: NoteEntity[];
+  existingCharacters: CharacterEntity[];
   onLinkClick: (noteTitle: string) => void;
   lineKey: string;
 }
@@ -12,6 +13,7 @@ interface FormattedTextProps {
 export const FormattedText: React.FC<FormattedTextProps> = ({
   text,
   existingNotes,
+  existingCharacters,
   onLinkClick,
   lineKey,
 }) => {
@@ -28,6 +30,11 @@ export const FormattedText: React.FC<FormattedTextProps> = ({
           const cleanTitle = targetTitle.trim();
           const displayName = customLabel ? customLabel.trim() : cleanTitle;
           const previewNote = existingNotes.find((note) => note.title.toLowerCase() === cleanTitle.toLowerCase());
+          const previewCharacter = existingCharacters.find((character) => character.name.toLowerCase() === cleanTitle.toLowerCase());
+
+          if (cleanTitle.toLocaleLowerCase().startsWith('tabela:')) {
+            return <span key={index} className="rounded bg-emerald-500/10 px-1 font-semibold text-emerald-400">{displayName}</span>;
+          }
 
           return (
             <WikiLink
@@ -35,6 +42,7 @@ export const FormattedText: React.FC<FormattedTextProps> = ({
               targetTitle={cleanTitle}
               displayName={displayName}
               previewNote={previewNote}
+              previewCharacter={previewCharacter}
               onLinkClick={onLinkClick}
             />
           );

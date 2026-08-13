@@ -1,5 +1,5 @@
 import React from 'react';
-import type { RollTable } from '../types/rpg.types';
+import type { CharacterEntity, NoteEntity, RollTable } from '../types/rpg.types';
 import { useRollTableManager } from '../hooks/useRollTableManager';
 import { RollTableList } from './RollTableList';
 import { RollTableEditor } from './RollTableEditor';
@@ -15,6 +15,11 @@ interface RollTableManagerProps {
   onUpdateTable: (tableId: string, updates: Partial<RollTable>) => Promise<void>;
   onDeleteTable: (tableId: string) => Promise<void>;
   onAddLog: (content: string) => Promise<void>;
+  selectedTableId?: string | null;
+  onSelectedTableChange?: (tableId: string | null) => void;
+  existingNotes: NoteEntity[];
+  existingCharacters: CharacterEntity[];
+  onWikiLinkClick: (title: string) => void;
 }
 
 export const RollTableManager: React.FC<RollTableManagerProps> = ({
@@ -25,15 +30,26 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
   onUpdateTable,
   onDeleteTable,
   onAddLog,
+  selectedTableId = null,
+  onSelectedTableChange,
+  existingNotes,
+  existingCharacters,
+  onWikiLinkClick,
 }) => {
   const campaignTables = rollTables.filter((table) => table.campaignId === campaignId);
-  const manager = useRollTableManager({ onUpdateTable, onDeleteTable, onAddLog }, campaignTables);
+  const initialTable = campaignTables.find((table) => table.id === selectedTableId) ?? null;
+  const manager = useRollTableManager({ onUpdateTable, onDeleteTable, onAddLog }, campaignTables, initialTable);
+
+  const selectTable = (table: RollTable) => {
+    manager.selectTable(table);
+    onSelectedTableChange?.(table.id);
+  };
 
   const handleCreateTable = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manager.state.newTableName.trim()) return;
     const created = await onCreateTable(manager.state.newTableName.trim(), manager.state.newTableFormula);
-    manager.selectTable(created);
+    selectTable(created);
     manager.resetNewTableForm();
   };
 
@@ -41,6 +57,7 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
     await onDeleteTable(table.id);
     if (manager.state.selectedTable?.id === table.id) {
       manager.deselectTable();
+      onSelectedTableChange?.(null);
     }
   };
 
@@ -65,7 +82,7 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
         onNewTableNameChange={manager.updateNewTableName}
         onNewTableFormulaChange={manager.updateNewTableFormula}
         onCreateTable={handleCreateTable}
-        onSelectTable={manager.selectTable}
+        onSelectTable={selectTable}
         onDeleteTable={handleDeleteTable}
       />
 
@@ -74,6 +91,9 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
           rolledNumber={manager.state.rolledNumber ?? 0}
           rollingResult={manager.state.rollingResult ?? ''}
           isVisible={manager.state.rolledNumber !== null || manager.state.rollingResult !== null}
+          existingNotes={existingNotes}
+          existingCharacters={existingCharacters}
+          onWikiLinkClick={onWikiLinkClick}
         />
 
         <RollTableEditor
@@ -89,6 +109,9 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
           onAddResult={manager.addResultRow}
           onDeleteResult={manager.deleteResultRow}
           onRoll={handleRollTable}
+          existingNotes={existingNotes}
+          existingCharacters={existingCharacters}
+          onWikiLinkClick={onWikiLinkClick}
         />
       </div>
     </div>

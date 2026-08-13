@@ -1,8 +1,17 @@
+import { useMemo } from 'react';
 import { MarkdownParser } from './components/MarkdownParser';
 import { SessionTimeline } from './components/SessionTimeLine';
 import { RollTableManager } from './components/RollTableManager';
 import { Soundboard } from './components/Soundboard';
 import { EntityManager } from './components/EntityManager';
+import { Sidebar } from './components/Sidebar';
+import { SessionZeroNoteEditor } from './components/SessionZeroNoteEditor';
+import { SessionNoteEditor } from './components/SessionNoteEditor';
+import { LocationNoteEditor } from './components/LocationNoteEditor';
+import { DungeonNoteEditor } from './components/DungeonNoteEditor';
+import { MapNoteEditor, MapNoteViewer } from './components/MapNoteEditor';
+import { ItemNoteEditor } from './components/ItemNoteEditor';
+import type { CategoryNode, FileNode, SidebarSectionType } from './components/sidebar.types';
 import { useBookMasterApp } from './hooks/useBookMasterApp';
 import {
   Plus,
@@ -35,6 +44,7 @@ export default function App() {
     selectedCampaignId,
     selectedNote,
     selectedChar,
+    selectedRollTableId,
     isEditing,
     isEditingChar,
     newCampaignName,
@@ -57,6 +67,8 @@ export default function App() {
     handleCreateCharFromSidebar,
     handleAddQuickLog,
     handleDeleteCampaign,
+    createNote,
+    updateNote,
     deleteNote,
     deleteCharacter,
     createSession,
@@ -70,7 +82,105 @@ export default function App() {
     deleteRollTable,
     createCharacter,
     updateCharacter,
+    createCampaign,
   } = useBookMasterApp();
+
+  const sidebarSections = useMemo<SidebarSectionType[]>(() => {
+    const noteFiles = (category: string, fallbackType?: string) => campaignNotes
+      .filter((note) => note.properties.sidebarCategory === category || (!note.properties.sidebarCategory && note.type === fallbackType))
+      .map((note) => ({ id: note.id, name: note.title, kind: 'note' as const, source: note, isDraft: note.isDraft }));
+    const charFiles = (type: 'pc' | 'npc' | 'monster' | 'villain') => characters
+      .filter((character) => character.campaignId === selectedCampaignId && character.type === type)
+      .map((character) => ({ id: character.id, name: character.name, kind: 'character' as const, source: character, isDraft: character.isDraft }));
+
+    return [
+      { id: 'session', label: 'Notas de sessão', accent: 'purple', categories: [
+        { id: 'session-zero', label: 'Notas sessão zero', createLabel: 'nota de sessão zero', kind: 'note', noteType: 'session_log', files: noteFiles('session-zero') },
+        { id: 'session-notes', label: 'Notas de sessão', createLabel: 'nota de sessão', kind: 'note', noteType: 'session_log', files: noteFiles('session-notes', 'session_log') },
+      ] },
+      { id: 'bestiary', label: 'Fichas e bestiário', accent: 'red', categories: [
+        { id: 'players', label: 'Jogadores', createLabel: 'jogador', kind: 'character', characterType: 'pc', files: charFiles('pc') },
+        { id: 'npcs', label: 'NPCs', createLabel: 'NPC', kind: 'character', characterType: 'npc', files: charFiles('npc') },
+        { id: 'monsters', label: 'Monstros', createLabel: 'monstro', kind: 'character', characterType: 'monster', files: charFiles('monster') },
+        { id: 'villains', label: 'Vilões', createLabel: 'vilão', kind: 'character', characterType: 'villain', files: charFiles('villain') },
+      ] },
+      { id: 'world', label: 'Mundo', accent: 'blue', categories: [
+        { id: 'history', label: 'História', createLabel: 'história', kind: 'note', noteType: 'lore', files: noteFiles('history', 'lore') },
+        { id: 'locations', label: 'Localizações', createLabel: 'localização', kind: 'note', noteType: 'location', files: noteFiles('locations', 'location') },
+        { id: 'dungeons', label: 'Masmorras', createLabel: 'masmorra', kind: 'note', noteType: 'location', files: noteFiles('dungeons') },
+        { id: 'maps', label: 'Mapas', createLabel: 'mapa', kind: 'note', noteType: 'lore', files: noteFiles('maps') },
+      ] },
+      { id: 'rules', label: 'Regras', accent: 'green', categories: [
+        { id: 'items', label: 'Itens', createLabel: 'item', kind: 'note', noteType: 'item', files: noteFiles('items', 'item') },
+        { id: 'annotations', label: 'Anotações', createLabel: 'anotação', kind: 'note', noteType: 'lore', files: noteFiles('annotations') },
+        { id: 'tables', label: 'Tabelas', createLabel: 'tabela', kind: 'table', files: rollTables.map((table) => ({ id: table.id, name: table.name, kind: 'table' as const, source: table, isDraft: table.isDraft })) },
+        { id: 'house-rules', label: 'Regras da Casa', createLabel: 'regra da casa', kind: 'note', noteType: 'lore', files: noteFiles('house-rules') },
+      ] },
+    ];
+  }, [campaignNotes, characters, rollTables, selectedCampaignId]);
+
+  const handleSidebarCreate = async (category: CategoryNode, name: string) => {
+    if (!selectedCampaignId) return;
+    if (category.kind === 'character' && category.characterType) {
+      const character = await createCharacter(selectedCampaignId, category.characterType, name);
+      handlers.setSelectedRollTableId(null);
+      handlers.setSelectedChar(character);
+      handlers.setIsEditingChar(true);
+      handlers.setActiveCenterTab('fichas');
+      return;
+    }
+    if (category.kind === 'table') {
+      const draft = await createRollTable(selectedCampaignId, name);
+      handlers.setSelectedNote(null);
+      handlers.setSelectedChar(null);
+      handlers.setSelectedRollTableId(draft.id);
+      handlers.setActiveCenterTab('tabelas');
+      return;
+    }
+    if (category.noteType) {
+      const note = await createNote(selectedCampaignId, name, category.noteType);
+      if (!note) return;
+      await updateNote(note.id, { properties: { ...note.properties, sidebarCategory: category.id } });
+      handlers.setSelectedRollTableId(null);
+      handlers.setSelectedNote({ ...note, properties: { ...note.properties, sidebarCategory: category.id } });
+      handlers.setIsEditing(true);
+      handlers.setActiveCenterTab('grimorio');
+    }
+  };
+
+  const handleSidebarSelect = (file: FileNode) => {
+    if (file.kind === 'character') {
+      handlers.setSelectedRollTableId(null);
+      handlers.setSelectedChar(file.source as typeof selectedChar);
+      handlers.setIsEditingChar(false);
+      handlers.setActiveCenterTab('fichas');
+    } else if (file.kind === 'table') {
+      handlers.setSelectedNote(null);
+      handlers.setSelectedChar(null);
+      handlers.setSelectedRollTableId(file.id);
+      handlers.setActiveCenterTab('tabelas');
+    } else {
+      handlers.setSelectedRollTableId(null);
+      handlers.setSelectedNote(file.source as typeof selectedNote);
+      handlers.setIsEditing(false);
+      handlers.setActiveCenterTab('grimorio');
+    }
+  };
+
+  const handleSidebarDelete = async (file: FileNode) => {
+    const confirmed = window.confirm(`Excluir permanentemente “${file.name}”?`);
+    if (!confirmed) return;
+    if (file.kind === 'character') {
+      await deleteCharacter(file.id);
+      if (selectedChar?.id === file.id) handlers.setSelectedChar(null);
+    } else if (file.kind === 'table') {
+      await deleteRollTable(file.id);
+      if (selectedRollTableId === file.id) handlers.setSelectedRollTableId(null);
+    } else {
+      await deleteNote(file.id);
+      if (selectedNote?.id === file.id) handlers.setSelectedNote(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -96,8 +206,32 @@ export default function App() {
         </div>
       )}
 
+      <Sidebar
+        campaigns={campaigns}
+        selectedCampaignId={selectedCampaignId}
+        sections={sidebarSections}
+        selectedItemId={selectedRollTableId ?? selectedNote?.id ?? selectedChar?.id}
+        isOpen={isLeftSidebarOpen}
+        onClose={() => handlers.setIsLeftSidebarOpen(false)}
+        onSelectCampaign={(campaignId) => {
+          handlers.setSelectedCampaignId(campaignId);
+          handlers.setSelectedNote(null);
+          handlers.setSelectedChar(null);
+          handlers.setSelectedRollTableId(null);
+        }}
+        onCreateCampaign={async (name) => {
+          const campaign = await createCampaign(name);
+          handlers.setSelectedCampaignId(campaign.id);
+        }}
+        onDeleteCampaign={handleDeleteCampaign}
+        onSelectFile={handleSidebarSelect}
+        onCreateFile={handleSidebarCreate}
+        onDeleteFile={handleSidebarDelete}
+      />
+
       <aside
-        className={`w-85 bg-rpg-panel border-r border-rpg-card flex flex-col z-20 transition-transform duration-300 absolute md:static h-full ${
+        aria-hidden="true"
+        className={`hidden w-85 bg-rpg-panel border-r border-rpg-card flex-col z-20 transition-transform duration-300 absolute md:static h-full ${
           isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
@@ -476,12 +610,24 @@ export default function App() {
                       </div>
                     )}
 
-                    <textarea
+                    {selectedNote.properties.sidebarCategory === 'session-zero' ? (
+                      <SessionZeroNoteEditor content={editContent} onChange={handlers.setEditContent} />
+                    ) : selectedNote.properties.sidebarCategory === 'session-notes' ? (
+                      <SessionNoteEditor content={editContent} onChange={handlers.setEditContent} />
+                    ) : selectedNote.properties.sidebarCategory === 'dungeons' ? (
+                      <DungeonNoteEditor content={editContent} onChange={handlers.setEditContent} />
+                    ) : selectedNote.properties.sidebarCategory === 'maps' ? (
+                      <MapNoteEditor content={editContent} notes={campaignNotes} onChange={handlers.setEditContent} />
+                    ) : selectedNote.type === 'item' ? (
+                      <ItemNoteEditor content={editContent} onChange={handlers.setEditContent} />
+                    ) : selectedNote.type === 'location' ? (
+                      <LocationNoteEditor content={editContent} onChange={handlers.setEditContent} />
+                    ) : <textarea
                       value={editContent}
                       onChange={(event) => handlers.setEditContent(event.target.value)}
                       placeholder="Escreva a lore ou descrição em markdown... Use [[Link]] para interligar as notas!"
                       className="w-full h-96 bg-rpg-card border border-rpg-card text-white rounded p-3 focus:outline-none focus:border-rpg-accent font-mono text-sm leading-relaxed resize-none"
-                    />
+                    />}
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -505,11 +651,13 @@ export default function App() {
                     )}
 
                     <div className="bg-rpg-panel/10 border border-rpg-card/20 rounded-lg p-6 min-h-[400px]">
+                      {selectedNote.properties.sidebarCategory === 'maps' ? <MapNoteViewer content={selectedNote.content} notes={campaignNotes} onSelectNote={(note) => { handlers.setSelectedNote(note); handlers.setIsEditing(false); }} /> :
                       <MarkdownParser
                         content={selectedNote.content}
                         existingNotes={campaignNotes}
+                        existingCharacters={characters}
                         onLinkClick={handleWikiLinkClick}
-                      />
+                      />}
                     </div>
                   </div>
                 )}
@@ -527,6 +675,7 @@ export default function App() {
 
           {activeCenterTab === 'tabelas' && (
             <RollTableManager
+              key={selectedRollTableId ?? 'tables'}
               campaignId={selectedCampaignId}
               rollTables={rollTables}
               activeSessionId={activeSession?.id || null}
@@ -534,6 +683,11 @@ export default function App() {
               onUpdateTable={updateRollTable}
               onDeleteTable={deleteRollTable}
               onAddLog={handleAddQuickLog}
+              selectedTableId={selectedRollTableId}
+              onSelectedTableChange={handlers.setSelectedRollTableId}
+              existingNotes={campaignNotes}
+              existingCharacters={characters}
+              onWikiLinkClick={handleWikiLinkClick}
             />
           )}
 

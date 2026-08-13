@@ -1,6 +1,8 @@
 import React, { type ReactNode } from 'react';
 import type { RollTable } from '../types/rpg.types';
 import { Dices, Trash2 } from 'lucide-react';
+import { FormattedText } from './FormattedText';
+import type { CharacterEntity, NoteEntity } from '../types/rpg.types';
 
 interface RollTableEditorProps {
   selectedTable: RollTable | null;
@@ -15,6 +17,9 @@ interface RollTableEditorProps {
   onAddResult: () => Promise<void>;
   onDeleteResult: (index: number) => Promise<void>;
   onRoll: () => void;
+  existingNotes: NoteEntity[];
+  existingCharacters: CharacterEntity[];
+  onWikiLinkClick: (title: string) => void;
 }
 
 export const RollTableEditor: React.FC<RollTableEditorProps> = ({
@@ -30,6 +35,9 @@ export const RollTableEditor: React.FC<RollTableEditorProps> = ({
   onAddResult,
   onDeleteResult,
   onRoll,
+  existingNotes,
+  existingCharacters,
+  onWikiLinkClick,
 }) => {
   if (!selectedTable) {
     return (
@@ -98,7 +106,7 @@ export const RollTableEditor: React.FC<RollTableEditorProps> = ({
               className="w-full bg-rpg-card border border-rpg-card text-xs p-1.5 rounded text-white outline-none focus:border-rpg-accent"
             />
             <p className="mt-1 text-[10px] text-rpg-muted">
-              Use [[Tabela: Nome da Tabela]] para chamar outra tabela automaticamente.
+              Use [[Nome da Ficha]] para vincular uma ficha ou [[Tabela: Nome]] para chamar outra tabela.
             </p>
           </div>
           <button
@@ -131,7 +139,7 @@ export const RollTableEditor: React.FC<RollTableEditorProps> = ({
                   <td className="py-2 font-mono text-rpg-accent font-bold">
                     {res.range[0]} {res.range[0] !== res.range[1] ? ` - ${res.range[1]}` : ''}
                   </td>
-                  <td className="py-2 text-white">{res.text}</td>
+                  <td className="py-2 text-white"><FormattedText text={res.text} existingNotes={existingNotes} existingCharacters={existingCharacters} onLinkClick={onWikiLinkClick} lineKey={`table-result-${idx}`} /></td>
                   <td className="py-2 text-right">
                     <button
                       onClick={() => onDeleteResult(idx)}

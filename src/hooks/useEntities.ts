@@ -8,7 +8,7 @@ export function useEntities(campaignId: string) {
 
   const createCharacter = async (targetCampaignId: string, type: CharacterEntity['type'], name: string, avatar?: string) => {
     const character: CharacterEntity = {
-      id: crypto.randomUUID(), campaignId: targetCampaignId, type, name, avatar, alignment: 'Neutro', languages: 'Comum', hp: type === 'monster' || type === 'villain' ? 15 : 10, hpMax: type === 'monster' || type === 'villain' ? 15 : 10, hpTemp: 0, ca: 10, initiative: 0, speed: '9 metros',
+      id: crypto.randomUUID(), campaignId: targetCampaignId, type, name, avatar, isDraft: true, alignment: 'Neutro', languages: 'Comum', hp: type === 'monster' || type === 'villain' ? 15 : 10, hpMax: type === 'monster' || type === 'villain' ? 15 : 10, hpTemp: 0, ca: 10, initiative: 0, speed: '9 metros',
       attributes: { strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 }, savingThrows: '', skills: '', senses: 'Percepção Passiva 10', resistances: '', immunities: '', actions: '⚔️ **Espada Curta.** Corpo a corpo: +4 para acertar. Dano: 1d6 + 2 perfurante.', bonusActions: '', reactions: '', biography: '', feats: '', features: '', equipment: '',
       ...(type === 'pc' && { class: 'Guerreiro', subclass: '', level: 1, species: 'Humano', background: 'Soldado', proficiencyBonus: 2, xp: 0, inspiration: false, deathSavesSuccesses: 0, deathSavesFailures: 0 }),
       ...(type === 'npc' && { role: 'Cidadão comum', appearance: 'Roupas simples de camponês.', personality: 'Pacífico e prestativo.' }),
@@ -17,7 +17,7 @@ export function useEntities(campaignId: string) {
     return character;
   };
 
-  const updateCharacter = async (id: string, updates: Partial<CharacterEntity>): Promise<void> => { await db.characters.update(id, updates); };
+  const updateCharacter = async (id: string, updates: Partial<CharacterEntity>): Promise<void> => { await db.characters.update(id, { ...updates, isDraft: false }); };
   const deleteCharacter = async (id: string): Promise<void> => { await db.characters.delete(id); };
   return { characters, loading: query === undefined, getCharactersByCampaign: (id: string) => characters.filter((character) => character.campaignId === id), createCharacter, updateCharacter, deleteCharacter };
 }

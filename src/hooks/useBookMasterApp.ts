@@ -36,6 +36,7 @@ export function useBookMasterApp() {
 
   const [selectedNote, setSelectedNote] = useState<NoteEntity | null>(null);
   const [selectedChar, setSelectedChar] = useState<CharacterEntity | null>(null);
+  const [selectedRollTableId, setSelectedRollTableId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editingCharId, setEditingCharId] = useState<string | null>(null);
   const [newCampaignName, setNewCampaignName] = useState<string>('');
@@ -217,6 +218,7 @@ export function useBookMasterApp() {
       await updateNote(selectedNote.id, {
         title: nextTitle,
         content: editContent,
+        isDraft: false,
         properties: {
           ...selectedNote.properties,
           hp: editHp,
@@ -229,6 +231,7 @@ export function useBookMasterApp() {
         ...selectedNote,
         title: nextTitle,
         content: editContent,
+        isDraft: false,
         properties: {
           ...selectedNote.properties,
           hp: editHp,
@@ -252,6 +255,19 @@ export function useBookMasterApp() {
       setSelectedNote(existing);
       setIsEditing(false);
       setActiveCenterTab('grimorio');
+      return;
+    }
+
+    const existingCharacter = characters.find(
+      (character) =>
+        character.campaignId === selectedCampaignId &&
+        character.name.trim().toLocaleLowerCase() === noteTitle.trim().toLocaleLowerCase(),
+    );
+
+    if (existingCharacter) {
+      setSelectedChar(existingCharacter);
+      setEditingCharId(null);
+      setActiveCenterTab('fichas');
       return;
     }
 
@@ -354,6 +370,7 @@ export function useBookMasterApp() {
     setSelectedCampaignId,
     setSelectedNote,
     setSelectedChar,
+    setSelectedRollTableId,
     setIsEditing,
     setIsEditingChar,
     setActiveCenterTab,
@@ -378,6 +395,7 @@ export function useBookMasterApp() {
     selectedCampaignId,
     selectedNote,
     selectedChar,
+    selectedRollTableId,
     isEditing,
     isEditingChar,
     newCampaignName,

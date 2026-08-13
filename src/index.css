@@ -24,6 +24,110 @@ option {
   color: #ffffff !important;
 }
 
+/* O bloco de NPC imita o pergaminho dos livros e não herda os campos escuros globais. */
+.npc-sheet {
+  background: linear-gradient(145deg, #edf8ea, #dcefd8) !important;
+  color: #16351d !important;
+  border-color: #316b3b !important;
+  box-shadow: 0 20px 45px rgb(20 83 45 / 14%);
+}
+
+.npc-sheet input,
+.npc-sheet textarea,
+.npc-sheet select {
+  background-color: #f5fff2 !important;
+  color: #16351d !important;
+  border-color: #86b98b !important;
+  caret-color: #16351d;
+}
+
+.npc-sheet input::placeholder,
+.npc-sheet textarea::placeholder {
+  color: #66856a !important;
+  opacity: 1;
+}
+
+.npc-sheet select option {
+  background-color: #f5fff2 !important;
+  color: #16351d !important;
+}
+
+.npc-sheet input:focus,
+.npc-sheet textarea:focus,
+.npc-sheet select:focus { border-color: #287a37 !important; box-shadow: 0 0 0 2px rgb(40 122 55 / 15%); }
+.npc-sheet [class*="border-[#8b2d24]"],
+.npc-sheet [class*="border-[#9b5b4c]"],
+.npc-sheet [class*="border-[#6d5045]"] { border-color: #316b3b !important; }
+.npc-sheet [class*="bg-[#dfd5c9]"] { background-color: #cde5ca !important; }
+.npc-sheet [class*="text-[#8b2d24]"],
+.npc-sheet [class*="text-[#7f352b]"],
+.npc-sheet [class*="text-[#7a4036]"] { color: #245f30 !important; }
+.npc-sheet [class*="text-[#805b52]"],
+.npc-sheet [class*="text-[#8a6a61]"] { color: #527759 !important; }
+
+.monster-sheet input,
+.monster-sheet textarea,
+.monster-sheet select { background-color: #fff8e8 !important; color: #351812 !important; border-color: #b99b82 !important; caret-color: #351812; }
+.monster-sheet input::placeholder,
+.monster-sheet textarea::placeholder { color: #8c6b5d !important; opacity: 1; }
+.monster-sheet select option { background-color: #fff8e8 !important; color: #351812 !important; }
+
+/* Stat block de vilão: estrutura de monstro com identidade preta e vermelha. */
+.villain-sheet {
+  background: linear-gradient(145deg, #09090b, #171014) !important;
+  color: #f5e7e7 !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 45%), 0 0 30px rgb(185 28 28 / 10%);
+}
+
+.villain-sheet input,
+.villain-sheet textarea,
+.villain-sheet select {
+  background-color: #170d10 !important;
+  color: #fff1f2 !important;
+  border-color: #7f1d1d !important;
+  caret-color: #ef4444;
+}
+
+.villain-sheet input::placeholder,
+.villain-sheet textarea::placeholder {
+  color: #a88a8e !important;
+  opacity: 1;
+}
+
+.villain-sheet select option {
+  background-color: #170d10 !important;
+  color: #fff1f2 !important;
+}
+
+.villain-sheet input:focus,
+.villain-sheet textarea:focus,
+.villain-sheet select:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgb(239 68 68 / 15%);
+}
+
+.villain-sheet [class*="border-[#8b2d24]"],
+.villain-sheet [class*="border-[#9b5b4c]"],
+.villain-sheet [class*="border-[#6d5045]"] {
+  border-color: #991b1b !important;
+}
+
+.villain-sheet [class*="bg-[#dfd5c9]"] {
+  background-color: #241216 !important;
+}
+
+.villain-sheet [class*="text-[#8b2d24]"],
+.villain-sheet [class*="text-[#7f352b]"],
+.villain-sheet [class*="text-[#7a4036]"] {
+  color: #f87171 !important;
+}
+
+.villain-sheet [class*="text-[#805b52]"],
+.villain-sheet [class*="text-[#8a6a61]"] {
+  color: #c4a1a5 !important;
+}
+
 
 /* Scrollbar customizada e moderna */
 .scrollbar-thin::-webkit-scrollbar {

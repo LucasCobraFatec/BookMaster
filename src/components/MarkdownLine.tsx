@@ -1,12 +1,13 @@
 import React from 'react';
 import { FormattedText } from './FormattedText';
 import { MarkdownImage } from './MarkdownImage';
-import type { NoteEntity } from '../types/rpg.types';
+import type { CharacterEntity, NoteEntity } from '../types/rpg.types';
 
 interface MarkdownLineProps {
   line: string;
   lineIndex: number;
   existingNotes: NoteEntity[];
+  existingCharacters: CharacterEntity[];
   onLinkClick: (noteTitle: string) => void;
 }
 
@@ -14,6 +15,7 @@ export const MarkdownLine: React.FC<MarkdownLineProps> = ({
   line,
   lineIndex,
   existingNotes,
+  existingCharacters,
   onLinkClick,
 }) => {
   const lineKey = `line-${lineIndex}`;
@@ -34,6 +36,7 @@ export const MarkdownLine: React.FC<MarkdownLineProps> = ({
         <FormattedText
           text={line.substring(2)}
           existingNotes={existingNotes}
+          existingCharacters={existingCharacters}
           onLinkClick={onLinkClick}
           lineKey={`${lineKey}-h1`}
         />
@@ -47,6 +50,7 @@ export const MarkdownLine: React.FC<MarkdownLineProps> = ({
         <FormattedText
           text={line.substring(3)}
           existingNotes={existingNotes}
+          existingCharacters={existingCharacters}
           onLinkClick={onLinkClick}
           lineKey={`${lineKey}-h2`}
         />
@@ -60,10 +64,25 @@ export const MarkdownLine: React.FC<MarkdownLineProps> = ({
         <FormattedText
           text={line.substring(4)}
           existingNotes={existingNotes}
+          existingCharacters={existingCharacters}
           onLinkClick={onLinkClick}
           lineKey={`${lineKey}-h3`}
         />
       </h3>
+    );
+  }
+
+  if (line.startsWith('#### ')) {
+    return (
+      <h4 key={lineKey} className="pt-2 text-xs font-bold uppercase tracking-wider text-sky-400">
+        <FormattedText
+          text={line.substring(5)}
+          existingNotes={existingNotes}
+          existingCharacters={existingCharacters}
+          onLinkClick={onLinkClick}
+          lineKey={`${lineKey}-h4`}
+        />
+      </h4>
     );
   }
 
@@ -76,6 +95,7 @@ export const MarkdownLine: React.FC<MarkdownLineProps> = ({
           <FormattedText
             text={listContent}
             existingNotes={existingNotes}
+            existingCharacters={existingCharacters}
             onLinkClick={onLinkClick}
             lineKey={`${lineKey}-list`}
           />
@@ -89,6 +109,7 @@ export const MarkdownLine: React.FC<MarkdownLineProps> = ({
       <FormattedText
         text={line}
         existingNotes={existingNotes}
+        existingCharacters={existingCharacters}
         onLinkClick={onLinkClick}
         lineKey={`${lineKey}-p`}
       />

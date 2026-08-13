@@ -20,9 +20,9 @@ interface RollTableState {
   isRolling: boolean;
 }
 
-export const useRollTableManager = (options: UseRollTableManagerOptions, tables: RollTable[]) => {
+export const useRollTableManager = (options: UseRollTableManagerOptions, tables: RollTable[], initialTable: RollTable | null = null) => {
   const [state, setState] = useState<RollTableState>({
-    selectedTable: null,
+    selectedTable: initialTable,
     newTableName: '',
     newTableFormula: '1d10',
     newMin: 1,
