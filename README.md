@@ -1,75 +1,44 @@
-# React + TypeScript + Vite
+# BookMaster
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+BookMaster é uma aplicação local para organizar e conduzir campanhas de RPG de mesa. Os dados ficam no navegador, em IndexedDB, sem exigir conta ou servidor.
 
-Currently, two official plugins are available:
+## Recursos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Campanhas com grimório em Markdown e wiki-links (`[[Nome da Nota]]`).
+- Fichas para personagens, NPCs, monstros e vilões.
+- Timeline de sessões e registros destacados.
+- Tabelas de rolagem com fórmulas como `1d20` e `2d6`.
+- Soundboard com efeitos e ambientes gerados pelo Web Audio API.
 
-## React Compiler
+## Tecnologias
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React, TypeScript e Vite
+- Tailwind CSS
+- Dexie / IndexedDB
 
-## Expanding the ESLint configuration
+## Desenvolvimento
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Requer Node.js 20 ou superior.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Use `npm.cmd` em ambientes Windows nos quais a política do PowerShell bloqueie `npm.ps1`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Verificação
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm run lint
+npm run test
+npm run build
 ```
+
+Os testes cobrem a resolução de wiki-links e a lógica de rolagem. A build de produção é gravada em `dist/`.
+
+## Dados locais e migrações
+
+O banco chama-se `RPGMasterDatabase` e é mantido pelo Dexie. A versão atual é 3; ao atualizar, wiki-links antes armazenados como títulos são convertidos para IDs de notas quando o destino existe. Excluir campanhas e sessões usa transações para evitar dados parcialmente removidos.
+
+Como os dados estão no navegador, limpar os dados do site remove campanhas, fichas e sessões. Faça exportações do perfil/navegador quando precisar preservar dados antes de limpar o armazenamento.

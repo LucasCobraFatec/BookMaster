@@ -53,7 +53,7 @@ export const SessionTimeline: React.FC<SessionTimelineProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-rpg-panel border-l border-rpg-card w-96 flex-shrink-0">
+    <div className="flex flex-col h-full min-w-0 w-full bg-rpg-panel">
       <div className="p-4 border-b border-rpg-card/60 bg-rpg-panel/50">
         <h3 className="text-md font-bold text-white flex items-center gap-2">
           <Clock className="w-5 h-5 text-rpg-accent" />
@@ -66,13 +66,13 @@ export const SessionTimeline: React.FC<SessionTimelineProps> = ({
 
       {!activeSession ? (
         <div className="flex-1 flex flex-col p-4 overflow-y-auto gap-4">
-          <form onSubmit={handleCreate} className="flex gap-2">
+          <form onSubmit={handleCreate} className="flex min-w-0 gap-2">
             <input
               type="text"
               placeholder="Nome da Sessão..."
               value={newSessionName}
               onChange={(e) => setNewSessionName(e.target.value)}
-              className="flex-1 bg-rpg-card border border-rpg-card text-white text-xs rounded px-2.5 py-1.5 focus:outline-none focus:border-rpg-accent"
+              className="min-w-0 flex-1 bg-rpg-card border border-rpg-card text-white text-xs rounded px-2.5 py-1.5 focus:outline-none focus:border-rpg-accent"
             />
             <button
               type="submit"

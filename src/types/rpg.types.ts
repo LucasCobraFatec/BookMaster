@@ -18,7 +18,7 @@ export interface NoteEntity {
     rarity?: string; // Comum, Incomum, Raro, Lendário (para itens)
     conditions?: string[]; // Condições ativas (ex: Atordoado, Envenenado)
     avatar?: string; // URL da imagem ou Base64 local
-    [key: string]: any; // Propriedades extras dinâmicas (estilo Dataview do Obsidian)
+    [key: string]: unknown; // Propriedades extras dinâmicas (estilo Dataview do Obsidian)
   };
   
   linkedNoteIds: string[]; // IDs de notas referenciadas via [[Link]]

@@ -1,9 +1,10 @@
 import React from 'react';
 import { WikiLink } from './WikiLink';
+import type { NoteEntity } from '../types/rpg.types';
 
 interface FormattedTextProps {
   text: string;
-  existingNotes: string[];
+  existingNotes: NoteEntity[];
   onLinkClick: (noteTitle: string) => void;
   lineKey: string;
 }
@@ -26,16 +27,14 @@ export const FormattedText: React.FC<FormattedTextProps> = ({
 
           const cleanTitle = targetTitle.trim();
           const displayName = customLabel ? customLabel.trim() : cleanTitle;
-          const noteExists = existingNotes.some(
-            (title) => title.toLowerCase() === cleanTitle.toLowerCase()
-          );
+          const previewNote = existingNotes.find((note) => note.title.toLowerCase() === cleanTitle.toLowerCase());
 
           return (
             <WikiLink
               key={index}
               targetTitle={cleanTitle}
               displayName={displayName}
-              noteExists={noteExists}
+              previewNote={previewNote}
               onLinkClick={onLinkClick}
             />
           );

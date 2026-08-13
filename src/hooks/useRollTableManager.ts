@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { RollTable } from '../types/rpg.types';
+import { resolveCompositeRoll } from '../lib/rollTable';
 
 interface UseRollTableManagerOptions {
   onUpdateTable: (tableId: string, updates: Partial<RollTable>) => Promise<void>;
@@ -19,7 +20,7 @@ interface RollTableState {
   isRolling: boolean;
 }
 
-export const useRollTableManager = (options: UseRollTableManagerOptions) => {
+export const useRollTableManager = (options: UseRollTableManagerOptions, tables: RollTable[]) => {
   const [state, setState] = useState<RollTableState>({
     selectedTable: null,
     newTableName: '',
@@ -115,29 +116,10 @@ export const useRollTableManager = (options: UseRollTableManagerOptions) => {
 
     setState(prev => ({ ...prev, isRolling: true, rollingResult: null, rolledNumber: null }));
 
-    const formula = state.selectedTable.formula.toLowerCase();
-    const formulaMatch = formula.match(/(\d+)d(\d+)/);
-
-    let diceCount = 1;
-    let diceSides = 10;
-
-    if (formulaMatch) {
-      diceCount = parseInt(formulaMatch[1]);
-      diceSides = parseInt(formulaMatch[2]);
-    }
-
-    let diceTotal = 0;
-    for (let i = 0; i < diceCount; i++) {
-      diceTotal += Math.floor(Math.random() * diceSides) + 1;
-    }
-
-    let matchText = 'Nenhum resultado correspondente.';
-    for (const res of state.selectedTable.results) {
-      if (diceTotal >= res.range[0] && diceTotal <= res.range[1]) {
-        matchText = res.text;
-        break;
-      }
-    }
+    const compositeRoll = resolveCompositeRoll(state.selectedTable, tables);
+    const diceTotal = compositeRoll.total;
+    const matchText = compositeRoll.result;
+    const diceSides = Number(state.selectedTable.formula.match(/\d+d(\d+)/i)?.[1] ?? 10);
 
     let ticks = 0;
     const interval = setInterval(() => {
@@ -152,11 +134,7 @@ export const useRollTableManager = (options: UseRollTableManagerOptions) => {
           isRolling: false,
         }));
 
-        if (activeSessionId && state.selectedTable) {
-          options.onAddLog(
-            `🎲 Tabela [${state.selectedTable.name}]: Rolado ${diceTotal} (${state.selectedTable.formula}) -> ${matchText}`
-          );
-        }
+        if (activeSessionId && state.selectedTable) options.onAddLog(`🎲 ${compositeRoll.trail.join(' → ')} -> ${matchText}`);
       }
     }, 80);
   };

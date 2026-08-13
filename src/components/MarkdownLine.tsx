@@ -1,10 +1,12 @@
 import React from 'react';
 import { FormattedText } from './FormattedText';
+import { MarkdownImage } from './MarkdownImage';
+import type { NoteEntity } from '../types/rpg.types';
 
 interface MarkdownLineProps {
   line: string;
   lineIndex: number;
-  existingNotes: string[];
+  existingNotes: NoteEntity[];
   onLinkClick: (noteTitle: string) => void;
 }
 
@@ -19,6 +21,12 @@ export const MarkdownLine: React.FC<MarkdownLineProps> = ({
   if (line.trim() === '') {
     return <div key={lineKey} className="h-2" />;
   }
+
+  const obsidianImage = line.trim().match(/^!\[\[([^|\]]+)(?:\|(\d+))?\]\]$/);
+  if (obsidianImage) return <MarkdownImage source={obsidianImage[1]} alt={obsidianImage[1]} width={obsidianImage[2] ? Number(obsidianImage[2]) : undefined} />;
+
+  const markdownImage = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+  if (markdownImage) return <MarkdownImage alt={markdownImage[1]} source={markdownImage[2]} />;
 
   if (line.startsWith('# ')) {
     return (

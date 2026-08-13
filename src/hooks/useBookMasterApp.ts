@@ -5,6 +5,7 @@ import { useRPGDatabase } from './useRPGDatabase';
 export type CenterTab = 'grimorio' | 'tabelas' | 'som' | 'fichas';
 
 export function useBookMasterApp() {
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>('');
   const {
     campaigns,
     notes,
@@ -31,9 +32,8 @@ export function useBookMasterApp() {
     createCharacter,
     updateCharacter,
     deleteCharacter,
-  } = useRPGDatabase();
+  } = useRPGDatabase(selectedCampaignId);
 
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string>('');
   const [selectedNote, setSelectedNote] = useState<NoteEntity | null>(null);
   const [selectedChar, setSelectedChar] = useState<CharacterEntity | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -86,16 +86,20 @@ export function useBookMasterApp() {
 
   useEffect(() => {
     if (campaigns.length > 0 && !selectedCampaignId) {
-      setSelectedCampaignId(campaigns[0].id);
+      const campaignId = campaigns[0].id;
+      queueMicrotask(() => setSelectedCampaignId(campaignId));
     }
   }, [campaigns, selectedCampaignId]);
 
   useEffect(() => {
     if (selectedNote) {
-      setEditTitle(selectedNote.title);
-      setEditContent(selectedNote.content);
-      setEditHp(selectedNote.properties?.hp ?? 0);
-      setEditCa(selectedNote.properties?.ca ?? 0);
+      const { title, content, properties } = selectedNote;
+      queueMicrotask(() => {
+        setEditTitle(title);
+        setEditContent(content);
+        setEditHp(properties?.hp ?? 0);
+        setEditCa(properties?.ca ?? 0);
+      });
     }
   }, [selectedNote]);
 
@@ -116,7 +120,7 @@ export function useBookMasterApp() {
       (updated.properties?.ca ?? 0) !== (selectedNote.properties?.ca ?? 0);
 
     if (hasChanged) {
-      setSelectedNote(updated);
+      queueMicrotask(() => setSelectedNote(updated));
     }
   }, [campaignNotes, selectedNote, isEditing]);
 
@@ -139,7 +143,7 @@ export function useBookMasterApp() {
       JSON.stringify(updated.attributes) !== JSON.stringify(selectedChar.attributes);
 
     if (hasChanged) {
-      setSelectedChar(updated);
+      queueMicrotask(() => setSelectedChar(updated));
     }
   }, [characters, selectedChar, isEditingChar]);
 

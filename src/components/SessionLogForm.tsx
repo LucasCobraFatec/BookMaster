@@ -17,13 +17,13 @@ export const SessionLogForm: React.FC<SessionLogFormProps> = ({
   onSubmit,
 }) => (
   <form onSubmit={onSubmit} className="p-3 border-b border-rpg-card/60 bg-rpg-card/20 flex flex-col gap-2">
-    <div className="flex gap-2">
+    <div className="flex min-w-0 gap-2">
       <input
         type="text"
         placeholder="O que aconteceu agora na mesa?..."
         value={logInput}
         onChange={(e) => onLogInputChange(e.target.value)}
-        className="flex-1 bg-rpg-card border border-rpg-card text-xs rounded px-2.5 py-1.5 focus:outline-none focus:border-rpg-accent text-white"
+        className="min-w-0 flex-1 bg-rpg-card border border-rpg-card text-xs rounded px-2.5 py-1.5 focus:outline-none focus:border-rpg-accent text-white"
       />
       <button
         type="submit"

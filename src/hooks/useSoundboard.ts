@@ -1,11 +1,22 @@
 import { useRef } from 'react';
 
+type WebkitAudioWindow = Window & typeof globalThis & {
+  webkitAudioContext?: typeof AudioContext;
+};
+
 export const useAudioContext = () => {
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const initAudio = () => {
     if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextConstructor =
+        window.AudioContext || (window as WebkitAudioWindow).webkitAudioContext;
+
+      if (!AudioContextConstructor) {
+        throw new Error('Web Audio API não é suportada neste navegador.');
+      }
+
+      audioCtxRef.current = new AudioContextConstructor();
     }
     if (audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();

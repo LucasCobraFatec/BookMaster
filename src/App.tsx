@@ -348,7 +348,7 @@ export default function App() {
         </div>
       </aside>
 
-      <main className="flex-1 bg-rpg-bg flex flex-col overflow-hidden">
+      <main className="flex-1 min-w-0 bg-rpg-bg flex flex-col overflow-hidden">
         <header className="p-3 border-b border-rpg-card/60 flex justify-between items-center bg-rpg-panel/30">
           <div className="flex items-center gap-2">
             <button
@@ -507,7 +507,7 @@ export default function App() {
                     <div className="bg-rpg-panel/10 border border-rpg-card/20 rounded-lg p-6 min-h-[400px]">
                       <MarkdownParser
                         content={selectedNote.content}
-                        existingNotes={campaignNotes.map((note) => note.title)}
+                        existingNotes={campaignNotes}
                         onLinkClick={handleWikiLinkClick}
                       />
                     </div>
@@ -558,7 +558,7 @@ export default function App() {
       </main>
 
       <aside
-        className={`w-80 bg-rpg-panel border-l border-rpg-card flex flex-col z-20 transition-transform duration-300 absolute md:static h-full right-0 ${
+        className={`w-80 md:w-96 overflow-x-hidden bg-rpg-panel border-l border-rpg-card flex flex-col z-20 transition-transform duration-300 absolute md:static h-full right-0 ${
           isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
         }`}
       >

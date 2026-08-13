@@ -6,7 +6,7 @@ import { AmbientLoops } from './AmbientLoops';
 
 export const Soundboard: React.FC = () => {
   const [isPlayingLoop, setIsPlayingLoop] = useState<string | null>(null);
-  const { audioCtxRef, initAudio } = useAudioContext();
+  const { initAudio } = useAudioContext();
   const { playSwordSound, playMagicSound, playHealSound, playDiceRollSound } =
     useSoundEffects(initAudio);
   const { playEnvironmentLoop, stopLoop } = useAmbientLoops(initAudio);

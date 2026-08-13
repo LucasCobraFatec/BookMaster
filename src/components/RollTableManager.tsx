@@ -9,7 +9,7 @@ interface RollTableManagerProps {
   campaignId: string;
   rollTables: RollTable[];
   activeSessionId: string | null;
-  onCreateTable: (name: string, formula: string) => Promise<any>;
+  onCreateTable: (name: string, formula: string) => Promise<RollTable>;
   onUpdateTable: (tableId: string, updates: Partial<RollTable>) => Promise<void>;
   onDeleteTable: (tableId: string) => Promise<void>;
   onAddLog: (content: string) => Promise<void>;
