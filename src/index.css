@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Regras globais para blindar o tema escuro */
+body {
+  background-color: #121214;
+  color: #e1e1e6;
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Evita que inputs do navegador fiquem brancos ou com escrita invisível */
+input, textarea, select {
+  background-color: #202024 !important;
+  color: #ffffff !important;
+  border-color: #2e2e2e !important;
+}
+
+/* Garante que as opções da lista de seleção fiquem escuras e legíveis */
+option {
+  background-color: #1a1a1e !important;
+  color: #ffffff !important;
+}
+
+
+/* Scrollbar customizada e moderna */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #202024;
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #8257e5;
+}
