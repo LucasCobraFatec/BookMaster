@@ -34,7 +34,7 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
   });
 
   const selectTable = (table: RollTable) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       selectedTable: table,
       rollingResult: null,
@@ -43,19 +43,19 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
   };
 
   const deselectTable = () => {
-    setState(prev => ({ ...prev, selectedTable: null }));
+    setState((prev) => ({ ...prev, selectedTable: null }));
   };
 
   const updateNewTableName = (name: string) => {
-    setState(prev => ({ ...prev, newTableName: name }));
+    setState((prev) => ({ ...prev, newTableName: name }));
   };
 
   const updateNewTableFormula = (formula: string) => {
-    setState(prev => ({ ...prev, newTableFormula: formula }));
+    setState((prev) => ({ ...prev, newTableFormula: formula }));
   };
 
   const resetNewTableForm = () => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       newTableName: '',
       newTableFormula: '1d10',
@@ -63,15 +63,15 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
   };
 
   const updateNewResultMin = (min: number) => {
-    setState(prev => ({ ...prev, newMin: min }));
+    setState((prev) => ({ ...prev, newMin: min }));
   };
 
   const updateNewResultMax = (max: number) => {
-    setState(prev => ({ ...prev, newMax: max }));
+    setState((prev) => ({ ...prev, newMax: max }));
   };
 
   const updateNewResultText = (text: string) => {
-    setState(prev => ({ ...prev, newText: text }));
+    setState((prev) => ({ ...prev, newText: text }));
   };
 
   const addResultRow = async () => {
@@ -83,12 +83,12 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
     };
 
     const updatedResults = [...state.selectedTable.results, newResult].sort(
-      (a, b) => a.range[0] - b.range[0]
+      (a, b) => a.range[0] - b.range[0],
     );
 
     await options.onUpdateTable(state.selectedTable.id, { results: updatedResults });
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       selectedTable: prev.selectedTable
         ? { ...prev.selectedTable, results: updatedResults }
@@ -101,9 +101,9 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
 
   const deleteResultRow = async (index: number) => {
     if (!state.selectedTable) return;
-    const updatedResults = state.selectedTable.results.filter((_, i) => i !== index);
+    const updatedResults = state.selectedTable.results.filter((_, resultIndex) => resultIndex !== index);
     await options.onUpdateTable(state.selectedTable.id, { results: updatedResults });
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       selectedTable: prev.selectedTable
         ? { ...prev.selectedTable, results: updatedResults }
@@ -114,7 +114,7 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
   const rollTable = (activeSessionId: string | null) => {
     if (!state.selectedTable || state.selectedTable.results.length === 0) return;
 
-    setState(prev => ({ ...prev, isRolling: true, rollingResult: null, rolledNumber: null }));
+    setState((prev) => ({ ...prev, isRolling: true, rollingResult: null, rolledNumber: null }));
 
     const compositeRoll = resolveCompositeRoll(state.selectedTable, tables);
     const diceTotal = compositeRoll.total;
@@ -123,18 +123,20 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
 
     let ticks = 0;
     const interval = setInterval(() => {
-      setState(prev => ({ ...prev, rolledNumber: Math.floor(Math.random() * diceSides) + 1 }));
-      ticks++;
+      setState((prev) => ({ ...prev, rolledNumber: Math.floor(Math.random() * diceSides) + 1 }));
+      ticks += 1;
       if (ticks > 10) {
         clearInterval(interval);
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           rolledNumber: diceTotal,
           rollingResult: matchText,
           isRolling: false,
         }));
 
-        if (activeSessionId && state.selectedTable) options.onAddLog(`🎲 ${compositeRoll.trail.join(' → ')} -> ${matchText}`);
+        if (activeSessionId && state.selectedTable) {
+          options.onAddLog(`Tabela ${compositeRoll.trail.join(' -> ')} -> ${matchText}`);
+        }
       }
     }, 80);
   };

@@ -31,6 +31,6 @@ export function EntityManager(props: EntityManagerProps) {
       <input type="text" placeholder={`Nome do novo ${entityLabel}...`} value={form.name} onChange={(event) => form.setName(event.target.value)} className="flex-1 bg-rpg-card border border-rpg-card text-xs rounded-md px-3 py-2 text-white focus:outline-none focus:border-rpg-accent" />
       <button type="submit" className="bg-rpg-accent hover:bg-rpg-accent/80 text-white font-bold text-xs px-4 py-2 rounded-md flex items-center gap-1.5"><Plus className="w-4 h-4" />Criar Ficha</button>
     </form>
-    <EntityList characters={form.characters} onSelect={props.setSelectedChar} />
+    <EntityList characters={form.characters} onSelect={form.selectCharacter} />
   </div>;
 }

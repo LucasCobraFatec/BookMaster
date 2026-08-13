@@ -38,9 +38,10 @@ export function useEntityForm(props: EntityManagerProps) {
   const [activeType, setActiveType] = useState<EntityType>('pc');
   const [name, setName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [localEditing, setLocalEditing] = useState(false);
+  const [localEditingCharId, setLocalEditingCharId] = useState<string | null>(null);
   const displayedType = props.selectedChar?.type ?? activeType;
-  const isEditing = props.isEditing || localEditing;
+  const selectedCharId = props.selectedChar?.id ?? null;
+  const isEditing = props.isEditing || Boolean(selectedCharId && localEditingCharId === selectedCharId);
 
   const characters = useMemo(() => props.characters.filter((character) =>
     character.campaignId === props.campaignId &&
@@ -49,7 +50,13 @@ export function useEntityForm(props: EntityManagerProps) {
   ), [displayedType, props.campaignId, props.characters, searchTerm]);
 
   const changeType = (type: EntityType) => {
-    setActiveType(type); props.setSelectedChar(null); setLocalEditing(false); props.setIsEditing(false);
+    setActiveType(type); props.setSelectedChar(null); setLocalEditingCharId(null); props.setIsEditing(false);
+  };
+
+  const selectCharacter = (character: CharacterEntity) => {
+    props.setSelectedChar(character);
+    props.setIsEditing(false);
+    setLocalEditingCharId(null);
   };
 
   const create = async (event: FormEvent) => {
@@ -57,7 +64,7 @@ export function useEntityForm(props: EntityManagerProps) {
     if (!name.trim()) return;
     const created = await props.onCreateCharacter(activeType, name.trim(), localStorage.getItem(avatarStorageKey) ?? undefined);
     localStorage.removeItem(avatarStorageKey);
-    props.setSelectedChar(created); props.setIsEditing(true); setLocalEditing(true); setName('');
+    props.setSelectedChar(created); props.setIsEditing(true); setLocalEditingCharId(created.id); setName('');
   };
 
   const save = async (event: FormEvent<HTMLFormElement>) => {
@@ -65,7 +72,7 @@ export function useEntityForm(props: EntityManagerProps) {
     if (!props.selectedChar) return;
     const update = buildCharacterUpdate(new FormData(event.currentTarget), props.selectedChar.type);
     await props.onUpdateCharacter(props.selectedChar.id, update);
-    props.setSelectedChar({ ...props.selectedChar, ...update }); props.setIsEditing(false); setLocalEditing(false);
+    props.setSelectedChar({ ...props.selectedChar, ...update }); props.setIsEditing(false); setLocalEditingCharId(null);
   };
 
   const uploadAvatar = (event: ChangeEvent<HTMLInputElement>) => {
@@ -81,8 +88,13 @@ export function useEntityForm(props: EntityManagerProps) {
     reader.readAsDataURL(file);
   };
 
-  const close = () => { props.setSelectedChar(null); props.setIsEditing(false); setLocalEditing(false); };
-  const startEditing = () => { props.setIsEditing(true); setLocalEditing(true); };
+  const close = () => { props.setSelectedChar(null); props.setIsEditing(false); setLocalEditingCharId(null); };
+  const startEditing = () => {
+    if (props.selectedChar) {
+      setLocalEditingCharId(props.selectedChar.id);
+    }
+    props.setIsEditing(true);
+  };
 
-  return { activeType, displayedType, name, setName, searchTerm, setSearchTerm, characters, isEditing, changeType, create, save, uploadAvatar, close, startEditing };
+  return { activeType, displayedType, name, setName, searchTerm, setSearchTerm, characters, isEditing, changeType, selectCharacter, create, save, uploadAvatar, close, startEditing };
 }

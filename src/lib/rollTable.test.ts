@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RollTable } from '../types/rpg.types';
-import { getRollTableResult, rollDice } from './rollTable';
+import { getRollTableResult, resolveCompositeRoll, rollDice } from './rollTable';
 
 const table: RollTable = {
   id: 'encounters',
@@ -25,5 +25,46 @@ describe('roll tables', () => {
   it('finds the matching range or reports a missing result', () => {
     expect(getRollTableResult(table, 12)).toBe('Ogro');
     expect(getRollTableResult(table, 21)).toBe('Nenhum resultado correspondente.');
+  });
+
+  it('resolves a nested table reference inside a result', () => {
+    const treasureTable: RollTable = {
+      id: 'treasures',
+      campaignId: 'campaign',
+      name: 'Tesouros',
+      formula: '1d4',
+      results: [{ range: [1, 4], text: 'moedas antigas' }],
+    };
+
+    const encounterTable: RollTable = {
+      ...table,
+      results: [{ range: [1, 20], text: 'Baú com [[Tabela: Tesouros]]' }],
+    };
+
+    const composite = resolveCompositeRoll(encounterTable, [encounterTable, treasureTable], () => 0);
+
+    expect(composite.result).toBe('Baú com moedas antigas');
+    expect(composite.trail).toEqual(['Encontros: 1', 'Tesouros: 1']);
+  });
+
+  it('stops recursive table cycles', () => {
+    const firstTable: RollTable = {
+      id: 'first',
+      campaignId: 'campaign',
+      name: 'Primeira',
+      formula: '1d4',
+      results: [{ range: [1, 4], text: 'Chama [[Tabela: Segunda]]' }],
+    };
+    const secondTable: RollTable = {
+      id: 'second',
+      campaignId: 'campaign',
+      name: 'Segunda',
+      formula: '1d4',
+      results: [{ range: [1, 4], text: 'Volta [[Tabela: Primeira]]' }],
+    };
+
+    const composite = resolveCompositeRoll(firstTable, [firstTable, secondTable], () => 0);
+
+    expect(composite.result).toBe('Chama Volta [Ciclo detectado: Primeira]');
   });
 });

@@ -4,6 +4,8 @@ import { useRollTableManager } from '../hooks/useRollTableManager';
 import { RollTableList } from './RollTableList';
 import { RollTableEditor } from './RollTableEditor';
 import { RollResult } from './RollResult';
+import { RollTableTransfer } from './RollTableTransfer';
+import type { ImportedRollTable } from '../lib/rollTableTransfer';
 
 interface RollTableManagerProps {
   campaignId: string;
@@ -24,9 +26,8 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
   onDeleteTable,
   onAddLog,
 }) => {
-  const manager = useRollTableManager({ onUpdateTable, onDeleteTable, onAddLog });
-
-  const campaignTables = rollTables.filter(t => t.campaignId === campaignId);
+  const campaignTables = rollTables.filter((table) => table.campaignId === campaignId);
+  const manager = useRollTableManager({ onUpdateTable, onDeleteTable, onAddLog }, campaignTables);
 
   const handleCreateTable = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +41,13 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
     await onDeleteTable(table.id);
     if (manager.state.selectedTable?.id === table.id) {
       manager.deselectTable();
+    }
+  };
+
+  const handleImportTables = async (tables: ImportedRollTable[]) => {
+    for (const table of tables) {
+      const created = await onCreateTable(table.name, table.formula);
+      await onUpdateTable(created.id, { results: table.results });
     }
   };
 
@@ -74,6 +82,7 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
           newMin={manager.state.newMin}
           newMax={manager.state.newMax}
           newText={manager.state.newText}
+          transferControls={<RollTableTransfer tables={campaignTables} onImport={handleImportTables} />}
           onNewMinChange={manager.updateNewResultMin}
           onNewMaxChange={manager.updateNewResultMax}
           onNewTextChange={manager.updateNewResultText}

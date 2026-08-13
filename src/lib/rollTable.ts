@@ -5,6 +5,12 @@ export interface DiceRoll {
   total: number;
 }
 
+export interface CompositeRoll {
+  total: number;
+  result: string;
+  trail: string[];
+}
+
 export function rollDice(formula: string, random = Math.random): DiceRoll {
   const formulaMatch = formula.trim().toLowerCase().match(/^(\d+)d(\d+)$/);
   const diceCount = Number(formulaMatch?.[1] ?? 1);
@@ -27,14 +33,16 @@ export function getRollTableResult(table: RollTable, total: number): string {
     ?? 'Nenhum resultado correspondente.';
 }
 
-export interface CompositeRoll {
-  total: number;
-  result: string;
-  trail: string[];
-}
+export function resolveCompositeRoll(
+  table: RollTable,
+  tables: RollTable[],
+  random = Math.random,
+  visited = new Set<string>(),
+): CompositeRoll {
+  if (visited.has(table.id)) {
+    return { total: 0, result: `[Ciclo detectado: ${table.name}]`, trail: [table.name] };
+  }
 
-export function resolveCompositeRoll(table: RollTable, tables: RollTable[], random = Math.random, visited = new Set<string>()): CompositeRoll {
-  if (visited.has(table.id)) return { total: 0, result: `[Ciclo detectado: ${table.name}]`, trail: [table.name] };
   const nextVisited = new Set(visited).add(table.id);
   const roll = rollDice(table.formula, random);
   let result = getRollTableResult(table, roll.total);
@@ -42,11 +50,16 @@ export function resolveCompositeRoll(table: RollTable, tables: RollTable[], rand
   const references = [...result.matchAll(/\[\[Tabela:\s*([^\]]+)\]\]/gi)];
 
   for (const reference of references) {
-    const target = tables.find((candidate) => candidate.name.toLocaleLowerCase() === reference[1].trim().toLocaleLowerCase());
+    const targetName = reference[1].trim();
+    const target = tables.find(
+      (candidate) => candidate.name.toLocaleLowerCase() === targetName.toLocaleLowerCase(),
+    );
+
     if (!target) {
-      result = result.replace(reference[0], `[Tabela não encontrada: ${reference[1].trim()}]`);
+      result = result.replace(reference[0], `[Tabela nao encontrada: ${targetName}]`);
       continue;
     }
+
     const nested = resolveCompositeRoll(target, tables, random, nextVisited);
     trail.push(...nested.trail);
     result = result.replace(reference[0], nested.result);

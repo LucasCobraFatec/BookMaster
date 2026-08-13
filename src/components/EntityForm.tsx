@@ -1,5 +1,5 @@
 import { Save, Trash2, Upload, X } from 'lucide-react';
-import type { ChangeEvent, FormEvent } from 'react';
+import type { ChangeEvent, FormEvent, MouseEvent } from 'react';
 import type { CharacterEntity } from '../types/rpg.types';
 
 interface EntityFormProps {
@@ -25,12 +25,28 @@ function TextArea({ name, label, value, editing }: { name: string; label: string
 
 export function EntityForm({ character, isEditing, onClose, onStartEditing, onSave, onDelete, onUploadAvatar }: EntityFormProps) {
   const monster = character.type === 'monster' || character.type === 'villain';
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    if (!isEditing) {
+      event.preventDefault();
+      onStartEditing();
+      return;
+    }
+
+    onSave(event);
+  };
+
+  const handleStartEditing = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onStartEditing();
+  };
+
   return <div className="bg-rpg-panel border border-rpg-card rounded-xl p-6 relative">
     <button type="button" onClick={onClose} className="absolute top-4 right-4 text-rpg-muted hover:text-white bg-rpg-card/50 p-1.5 rounded-full"><X className="w-4 h-4" /></button>
-    <form onSubmit={onSave} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <header className="flex flex-col md:flex-row gap-6 items-start border-b border-rpg-card pb-6">
         <div className="relative w-32 h-32 bg-rpg-card rounded-xl overflow-hidden border border-rpg-card/80 group p-1">{character.avatar ? <img src={character.avatar} alt={character.name} className="w-full h-full object-contain rounded-lg" /> : <div className="h-full grid place-items-center text-rpg-muted">Sem avatar</div>}{isEditing && <label className="absolute inset-0 bg-black/70 hidden group-hover:flex flex-col items-center justify-center cursor-pointer"><Upload className="w-6 h-6 text-white" /><input type="file" accept="image/*" className="hidden" onChange={onUploadAvatar} /></label>}</div>
-        <div className="flex-1 w-full"><div className="flex gap-3 justify-between items-center">{isEditing ? <input name="name" required defaultValue={character.name} className="bg-rpg-card border border-rpg-accent/30 text-lg font-bold rounded px-3 py-1 text-white w-full" /> : <h2 className="text-2xl font-black text-white">{character.name}</h2>}<div className="flex gap-2">{isEditing ? <button type="submit" className="bg-emerald-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg flex gap-1"><Save className="w-3.5 h-3.5" />Salvar</button> : <button type="button" onClick={onStartEditing} className="bg-rpg-accent text-white font-bold text-xs px-3.5 py-1.5 rounded-lg">Editar</button>}<button type="button" onClick={onDelete} className="text-red-400 p-2"><Trash2 className="w-4 h-4" /></button></div></div>
+        <div className="flex-1 w-full"><div className="flex gap-3 justify-between items-center">{isEditing ? <input name="name" required defaultValue={character.name} className="bg-rpg-card border border-rpg-accent/30 text-lg font-bold rounded px-3 py-1 text-white w-full" /> : <h2 className="text-2xl font-black text-white">{character.name}</h2>}<div className="flex gap-2">{isEditing ? <button type="submit" className="bg-emerald-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg flex gap-1"><Save className="w-3.5 h-3.5" />Salvar</button> : <button type="button" onClick={handleStartEditing} className="bg-rpg-accent text-white font-bold text-xs px-3.5 py-1.5 rounded-lg">Editar</button>}<button type="button" onClick={onDelete} className="text-red-400 p-2"><Trash2 className="w-4 h-4" /></button></div></div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5"><Field name="alignment" label="Alinhamento" value={character.alignment} editing={isEditing} /><Field name="languages" label="Idiomas" value={character.languages} editing={isEditing} /><Field name="hp" label="PV" value={character.hp} editing={isEditing} type="number" /><Field name="hpMax" label="PV Máximo" value={character.hpMax} editing={isEditing} type="number" /><Field name="hpTemp" label="PV Temporário" value={character.hpTemp} editing={isEditing} type="number" /><Field name="ca" label="CA" value={character.ca} editing={isEditing} type="number" /><Field name="initiative" label="Iniciativa" value={character.initiative} editing={isEditing} type="number" /><Field name="speed" label="Deslocamento" value={character.speed} editing={isEditing} /></div>
         </div>
       </header>

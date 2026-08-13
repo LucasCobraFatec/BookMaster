@@ -37,7 +37,7 @@ export function useBookMasterApp() {
   const [selectedNote, setSelectedNote] = useState<NoteEntity | null>(null);
   const [selectedChar, setSelectedChar] = useState<CharacterEntity | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [isEditingChar, setIsEditingChar] = useState<boolean>(false);
+  const [editingCharId, setEditingCharId] = useState<string | null>(null);
   const [newCampaignName, setNewCampaignName] = useState<string>('');
   const [activeCenterTab, setActiveCenterTab] = useState<CenterTab>('grimorio');
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
@@ -47,6 +47,14 @@ export function useBookMasterApp() {
   const [editHp, setEditHp] = useState<number>(0);
   const [editCa, setEditCa] = useState<number>(0);
   const [appError, setAppError] = useState<string | null>(null);
+  const isEditingChar = Boolean(selectedChar && editingCharId === selectedChar.id);
+
+  const setIsEditingChar = useCallback(
+    (editing: boolean) => {
+      setEditingCharId(editing ? selectedChar?.id ?? null : null);
+    },
+    [selectedChar?.id],
+  );
 
   const campaignNotes = useMemo(
     () => notes.filter((n) => n.campaignId === selectedCampaignId),
@@ -292,7 +300,7 @@ export function useBookMasterApp() {
       }
 
       setSelectedChar(character);
-      setIsEditingChar(true);
+      setEditingCharId(character.id);
       setActiveCenterTab('fichas');
       return character;
     }, 'Não foi possível criar a ficha.');
@@ -333,6 +341,7 @@ export function useBookMasterApp() {
       setSelectedCampaignId(remaining.length > 0 ? remaining[0].id : '');
       setSelectedNote(null);
       setSelectedChar(null);
+      setEditingCharId(null);
       return true;
     }, 'Não foi possível excluir a campanha.');
 
