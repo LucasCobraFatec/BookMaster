@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import type { CharacterEntity, NoteEntity } from '../types/rpg.types';
 import { useRPGDatabase } from './useRPGDatabase';
+import { parseWikiLinkTarget, resolveWikiLinkTarget } from '../lib/wikiLinks';
+import { getRollTableLinkName, resolveRollTableLink } from '../lib/rollTable';
 
 export type CenterTab = 'grimorio' | 'tabelas' | 'som' | 'fichas';
 
@@ -247,32 +249,55 @@ export function useBookMasterApp() {
       return;
     }
 
-    const existing = campaignNotes.find(
-      (note) => note.title.toLowerCase() === noteTitle.toLowerCase(),
-    );
+    const campaignCharacters = characters.filter((character) => character.campaignId === selectedCampaignId);
+    const campaignTables = rollTables.filter((table) => table.campaignId === selectedCampaignId);
+    const tableLinkName = getRollTableLinkName(noteTitle);
+    const existingTable = resolveRollTableLink(noteTitle, campaignTables);
 
-    if (existing) {
-      setSelectedNote(existing);
+    if (existingTable) {
+      setSelectedRollTableId(existingTable.id);
+      setSelectedNote(null);
+      setSelectedChar(null);
+      setIsEditing(false);
+      setEditingCharId(null);
+      setActiveCenterTab('tabelas');
+      return;
+    }
+
+    if (tableLinkName) {
+      setAppError(`A tabela "${tableLinkName}" não existe nesta campanha.`);
+      return;
+    }
+
+    const existing = resolveWikiLinkTarget(noteTitle, campaignNotes, campaignCharacters);
+
+    if (existing?.kind === 'note') {
+      setSelectedNote(existing.entity);
+      setSelectedChar(null);
+      setSelectedRollTableId(null);
       setIsEditing(false);
       setActiveCenterTab('grimorio');
       return;
     }
 
-    const existingCharacter = characters.find(
-      (character) =>
-        character.campaignId === selectedCampaignId &&
-        character.name.trim().toLocaleLowerCase() === noteTitle.trim().toLocaleLowerCase(),
-    );
-
-    if (existingCharacter) {
-      setSelectedChar(existingCharacter);
+    if (existing?.kind === 'character') {
+      setSelectedChar(existing.entity);
+      setSelectedNote(null);
+      setSelectedRollTableId(null);
       setEditingCharId(null);
       setActiveCenterTab('fichas');
       return;
     }
 
+    const parsedTarget = parseWikiLinkTarget(noteTitle);
+
+    if (parsedTarget.preferredKind === 'character') {
+      setAppError(`A ficha "${parsedTarget.title}" não existe nesta campanha.`);
+      return;
+    }
+
     const shouldCreate = window.confirm(
-      `A nota "[[${noteTitle}]]" não existe. Deseja criá-la agora?`,
+      `A nota "[[${parsedTarget.title}]]" não existe. Deseja criá-la agora?`,
     );
 
     if (!shouldCreate) {
@@ -280,7 +305,7 @@ export function useBookMasterApp() {
     }
 
     const createdNote = await runSafe(async () => {
-      const note = await createNote(selectedCampaignId, noteTitle, 'lore');
+      const note = await createNote(selectedCampaignId, parsedTarget.title, 'lore');
       if (!note) {
         return null;
       }

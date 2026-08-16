@@ -1,6 +1,7 @@
 import React from 'react';
 import { WikiLink } from './WikiLink';
 import type { CharacterEntity, NoteEntity } from '../types/rpg.types';
+import { parseWikiLinkTarget, resolveWikiLinkTarget } from '../lib/wikiLinks';
 
 interface FormattedTextProps {
   text: string;
@@ -28,12 +29,14 @@ export const FormattedText: React.FC<FormattedTextProps> = ({
           const [targetTitle, customLabel] = rawLink.split('|');
 
           const cleanTitle = targetTitle.trim();
-          const displayName = customLabel ? customLabel.trim() : cleanTitle;
-          const previewNote = existingNotes.find((note) => note.title.toLowerCase() === cleanTitle.toLowerCase());
-          const previewCharacter = existingCharacters.find((character) => character.name.toLowerCase() === cleanTitle.toLowerCase());
+          const parsedTarget = parseWikiLinkTarget(cleanTitle);
+          const displayName = customLabel ? customLabel.trim() : parsedTarget.title;
+          const resolvedTarget = resolveWikiLinkTarget(cleanTitle, existingNotes, existingCharacters);
+          const previewNote = resolvedTarget?.kind === 'note' ? resolvedTarget.entity : undefined;
+          const previewCharacter = resolvedTarget?.kind === 'character' ? resolvedTarget.entity : undefined;
 
           if (cleanTitle.toLocaleLowerCase().startsWith('tabela:')) {
-            return <span key={index} className="rounded bg-emerald-500/10 px-1 font-semibold text-emerald-400">{displayName}</span>;
+            return <button type="button" key={index} onClick={() => onLinkClick(cleanTitle)} title="Abrir tabela" className="rounded bg-emerald-500/10 px-1 font-semibold text-emerald-400 transition hover:bg-emerald-500/20 hover:underline">{displayName}</button>;
           }
 
           return (

@@ -159,6 +159,7 @@ export interface NpcSheetData {
   conditionImmunities?: string;
   legendaryActions?: string;
   legendaryResistance?: string;
+  initiativeAdjustment?: number;
 }
 
 export interface PlayerSheetRow { id: string; [key: string]: string | number | boolean; }
@@ -168,6 +169,7 @@ export interface PlayerSheetData {
   armorBase: number;
   armorDexCap: number | null;
   hitDie: number;
+  initiativeAdjustment?: number;
   size: string;
   passivePerception: number;
   hitDiceSpent: number;

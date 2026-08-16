@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { MarkdownParser } from './components/MarkdownParser';
-import { SessionTimeline } from './components/SessionTimeLine';
 import { RollTableManager } from './components/RollTableManager';
 import { Soundboard } from './components/Soundboard';
 import { EntityManager } from './components/EntityManager';
@@ -11,6 +10,8 @@ import { LocationNoteEditor } from './components/LocationNoteEditor';
 import { DungeonNoteEditor } from './components/DungeonNoteEditor';
 import { MapNoteEditor, MapNoteViewer } from './components/MapNoteEditor';
 import { ItemNoteEditor } from './components/ItemNoteEditor';
+import { BattleTracker, type BattleToken } from './components/BattleTracker';
+import { CombatTurnTracker } from './components/CombatTurnTracker';
 import type { CategoryNode, FileNode, SidebarSectionType } from './components/sidebar.types';
 import { useBookMasterApp } from './hooks/useBookMasterApp';
 import {
@@ -26,14 +27,17 @@ import {
   Scroll,
   Folder,
   FolderPlus,
-  Play,
   Volume2,
   TableProperties,
   Save,
   User,
+  Swords,
 } from 'lucide-react';
 
 export default function App() {
+  const [battleTrackerOpen, setBattleTrackerOpen] = useState(false);
+  const [battleActive, setBattleActive] = useState(false);
+  const [battleTokens, setBattleTokens] = useState<BattleToken[]>([]);
   const {
     campaigns,
     rollTables,
@@ -56,27 +60,17 @@ export default function App() {
     editHp,
     editCa,
     campaignNotes,
-    campaignSessions,
-    activeSession,
-    sessionLogs,
     handlers,
     handleCreateCampaign,
     handleCreateNote,
     handleSaveNote,
     handleWikiLinkClick,
     handleCreateCharFromSidebar,
-    handleAddQuickLog,
     handleDeleteCampaign,
     createNote,
     updateNote,
     deleteNote,
     deleteCharacter,
-    createSession,
-    toggleSessionActive,
-    deleteSession,
-    addSessionLog,
-    toggleLogHighlight,
-    deleteSessionLog,
     createRollTable,
     updateRollTable,
     deleteRollTable,
@@ -536,15 +530,11 @@ export default function App() {
               >
                 <User className="w-3.5 h-3.5" /> Fichas & Bestiário
               </button>
+              <button onClick={() => setBattleTrackerOpen(true)} className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold transition-all ${battleActive ? 'border border-rose-500/40 bg-rose-500/15 text-rose-300' : 'border border-transparent bg-rpg-card/30 text-rpg-muted hover:bg-rpg-card hover:text-white'}`}><Swords className="h-3.5 w-3.5" />Batalha</button>
             </div>
           </div>
 
-          <button
-            onClick={() => handlers.setIsRightSidebarOpen(true)}
-            className="md:hidden text-rpg-muted p-1 hover:text-white flex items-center gap-1 text-xs"
-          >
-            <Play className="w-3.5 h-3.5 fill-rpg-accent/20" /> Sessões
-          </button>
+          {battleActive && <button onClick={() => handlers.setIsRightSidebarOpen(true)} className="flex items-center gap-1 rounded p-1 text-xs text-rose-400 hover:text-white md:hidden"><Swords className="h-3.5 w-3.5" />Batalha</button>}
         </header>
 
         <div className="flex-1 p-6 overflow-y-auto">
@@ -651,7 +641,7 @@ export default function App() {
                     )}
 
                     <div className="bg-rpg-panel/10 border border-rpg-card/20 rounded-lg p-6 min-h-[400px]">
-                      {selectedNote.properties.sidebarCategory === 'maps' ? <MapNoteViewer content={selectedNote.content} notes={campaignNotes} onSelectNote={(note) => { handlers.setSelectedNote(note); handlers.setIsEditing(false); }} /> :
+                      {selectedNote.properties.sidebarCategory === 'maps' ? <MapNoteViewer content={selectedNote.content} notes={campaignNotes} characters={characters.filter((character) => character.campaignId === selectedCampaignId)} onLinkClick={handleWikiLinkClick} onSelectNote={(note) => { handlers.setSelectedNote(note); handlers.setIsEditing(false); }} /> :
                       <MarkdownParser
                         content={selectedNote.content}
                         existingNotes={campaignNotes}
@@ -678,11 +668,11 @@ export default function App() {
               key={selectedRollTableId ?? 'tables'}
               campaignId={selectedCampaignId}
               rollTables={rollTables}
-              activeSessionId={activeSession?.id || null}
+              activeSessionId={null}
               onCreateTable={createRollTable}
               onUpdateTable={updateRollTable}
               onDeleteTable={deleteRollTable}
-              onAddLog={handleAddQuickLog}
+              onAddLog={async () => undefined}
               selectedTableId={selectedRollTableId}
               onSelectedTableChange={handlers.setSelectedRollTableId}
               existingNotes={campaignNotes}
@@ -711,13 +701,13 @@ export default function App() {
         </div>
       </main>
 
-      <aside
+      {battleActive && <aside
         className={`w-80 bg-rpg-panel border-l border-rpg-card flex flex-col z-20 transition-transform duration-300 absolute md:static h-full right-0 ${
           isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
         }`}
       >
         <div className="p-4 border-b border-rpg-card/60 flex items-center justify-between">
-          <h2 className="text-xs font-bold text-rpg-accent uppercase tracking-wider">Timeline de Sessões</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-rose-400">Rastreador de Batalha</h2>
           <button
             onClick={() => handlers.setIsRightSidebarOpen(false)}
             className="md:hidden text-rpg-muted p-1 hover:text-white"
@@ -727,34 +717,11 @@ export default function App() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          <SessionTimeline
-            campaignId={selectedCampaignId}
-            sessions={campaignSessions}
-            activeSession={activeSession}
-            sessionLogs={sessionLogs}
-            onCreateSession={async (name) => {
-              await createSession(selectedCampaignId, name);
-            }}
-            onToggleActive={async (id, active) => {
-              await toggleSessionActive(selectedCampaignId, id, active);
-            }}
-            onDeleteSession={async (id) => {
-              await deleteSession(id);
-            }}
-            onAddLog={async (content, isHighlight) => {
-              if (activeSession) {
-                await addSessionLog(activeSession.id, content, isHighlight);
-              }
-            }}
-            onToggleHighlight={async (id, current) => {
-              await toggleLogHighlight(id, current);
-            }}
-            onDeleteLog={async (id) => {
-              await deleteSessionLog(id);
-            }}
-          />
+          <CombatTurnTracker tokens={battleTokens} onTokensChange={setBattleTokens} onEnd={() => { setBattleActive(false); setBattleTokens([]); }} />
         </div>
-      </aside>
+      </aside>}
+
+      <BattleTracker open={battleTrackerOpen} characters={characters.filter((character) => character.campaignId === selectedCampaignId)} tokens={battleTokens} onTokensChange={setBattleTokens} onClose={() => setBattleTrackerOpen(false)} onStart={() => { setBattleActive(true); handlers.setIsRightSidebarOpen(true); }} />
 
       <div className="md:hidden fixed bottom-4 right-4 flex flex-col gap-2 z-30">
         <button

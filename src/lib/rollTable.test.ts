@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RollTable } from '../types/rpg.types';
-import { getRollTableResult, resolveCompositeRoll, rollDice } from './rollTable';
+import { getRollTableResult, resolveCompositeRoll, resolveRollTableLink, rollDice } from './rollTable';
 
 const table: RollTable = {
   id: 'encounters',
@@ -14,6 +14,11 @@ const table: RollTable = {
 };
 
 describe('roll tables', () => {
+  it('resolves a table wikilink despite spaces and letter case', () => {
+    const table = { id: 'treasures', campaignId: 'campaign', name: 'Tesouros Antigos', formula: '1d20', results: [] } as RollTable;
+    expect(resolveRollTableLink(' TABELA:  tesouros antigos ', [table])).toBe(table);
+    expect(resolveRollTableLink('Tesouros Antigos', [table])).toBeUndefined();
+  });
   it('rolls each die in a valid formula', () => {
     expect(rollDice('2d6', () => 0.5)).toEqual({ diceSides: 6, total: 8 });
   });

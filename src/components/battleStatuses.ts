@@ -1,0 +1,21 @@
+export type BattleStatusDefinition = { id: string; name: string; description: string[]; stackable?: boolean; maxStacks?: number };
+
+export const BATTLE_STATUS_DEFINITIONS: BattleStatusDefinition[] = [
+  { id: 'amedrontado', name: 'Amedrontado', description: ['Ataques e habilidades: desvantagem enquanto a fonte do medo estiver em sua linha de visão.', 'Movimento: não pode se mover voluntariamente em direção à fonte do medo.'] },
+  { id: 'enfeiticado', name: 'Enfeitiçado', description: ['Não pode atacar quem o enfeitiçou nem direcionar contra ele habilidades ou efeitos mágicos prejudiciais.', 'Quem enfeitiçou tem vantagem em testes de interação social com a criatura.'] },
+  { id: 'inconsciente', name: 'Inconsciente', description: ['Também está Incapacitado e Caído, solta tudo o que estiver segurando e, quando a condição termina, continua Caído.', 'Movimento zero: não pode se mover, falar ou perceber os arredores.', 'Ataques corpo a corpo que o atingem são críticos.', 'Falha automaticamente nas salvaguardas de Força e Destreza.'] },
+  { id: 'atordoado', name: 'Atordoado', description: ['Incapacitado: veja a condição Incapacitado.', 'Falha automaticamente nas salvaguardas de Força e Destreza.', 'Ataques contra a criatura têm vantagem.'] },
+  { id: 'envenenado', name: 'Envenenado', description: ['Tem desvantagem em jogadas de ataque e testes de habilidade.'] },
+  { id: 'invisivel', name: 'Invisível', description: ['Tem vantagem nas rolagens de iniciativa.', 'Você e seus equipamentos não podem ser alvos de efeitos que exigem que o alvo seja visto.', 'Ataques contra você têm desvantagem e seus ataques têm vantagem, exceto quando o oponente puder vê-lo.'] },
+  { id: 'caido', name: 'Caído', description: ['Só pode rastejar, com custo dobrado, a menos que gaste metade do movimento para se levantar.', 'Tem desvantagem nos ataques. Oponentes têm vantagem em ataques corpo a corpo e desvantagem em ataques à distância.'] },
+  { id: 'exaustao', name: 'Exaustão', stackable: true, maxStacks: 6, description: ['Possui 6 níveis e seus efeitos são cumulativos.', 'Jogadas de d20 recebem penalidade de −2 por nível.', 'O movimento é reduzido em 1,5 m por nível.', 'No nível 6, o personagem morre.', 'Cada descanso longo reduz um nível, com acesso a comida e água adequadas.'] },
+  { id: 'fadigado', name: 'Fadigado', description: ['Recuperou-se após três sucessos em salvaguardas contra a morte.', 'O mestre determina quando este estado termina, normalmente após descanso ou recuperação adequada.'] },
+  { id: 'paralisado', name: 'Paralisado', description: ['Também está Incapacitado e não pode se movimentar.', 'Falha automaticamente nas salvaguardas de Força e Destreza.', 'Ataques contra a criatura têm vantagem; ataques corpo a corpo que a atingem são críticos.'] },
+  { id: 'cego', name: 'Cego', description: ['Falha automaticamente em testes de habilidade que dependam da visão.', 'Ataques contra a criatura têm vantagem e os ataques da criatura têm desvantagem.'] },
+  { id: 'petrificado', name: 'Petrificado', description: ['Torna-se uma substância sólida junto com objetos não mágicos que estiver portando.', 'Seu peso total é multiplicado por 10.', 'Está Incapacitado e com movimento zero.', 'Ataques contra a criatura têm vantagem e ela falha automaticamente nas salvaguardas de Força e Destreza.', 'Tem resistência a todos os danos e imunidade à condição Envenenado.'] },
+  { id: 'contido', name: 'Contido', description: ['Movimento zero.', 'Ataques contra você têm vantagem e seus ataques têm desvantagem.', 'Salvaguardas de Destreza são realizadas com desvantagem.'] },
+  { id: 'incapacitado', name: 'Incapacitado', description: ['Não executa ações, ações bônus ou reações.', 'A concentração é quebrada e não é capaz de falar.', 'Tem desvantagem em iniciativas.'] },
+  { id: 'surdo', name: 'Surdo', description: ['Falha automaticamente em testes de habilidade que dependam da audição.'] },
+  { id: 'agarrado', name: 'Agarrado', description: ['Movimento zero.', 'Tem desvantagem em ataques contra qualquer alvo que não seja o agarrador.', 'O agarrador pode arrastar ou carregar a criatura com custo dobrado, salvo se ela for minúscula ou duas categorias menor.'] },
+];
+export const getBattleStatusDefinition = (id?: string) => BATTLE_STATUS_DEFINITIONS.find((status) => status.id === id);

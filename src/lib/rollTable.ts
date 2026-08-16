@@ -11,6 +11,21 @@ export interface CompositeRoll {
   trail: string[];
 }
 
+export function getRollTableLinkName(rawTitle: string): string | undefined {
+  const match = rawTitle.trim().match(/^tabela\s*:\s*(.+)$/i);
+  return match?.[1].trim() || undefined;
+}
+
+export function resolveRollTableLink(rawTitle: string, tables: RollTable[]): RollTable | undefined {
+  const explicitName = getRollTableLinkName(rawTitle);
+  if (!explicitName) return undefined;
+
+  const normalizedName = explicitName.normalize('NFC').toLocaleLowerCase();
+  return tables.find(
+    (table) => table.name.trim().normalize('NFC').toLocaleLowerCase() === normalizedName,
+  );
+}
+
 export function rollDice(formula: string, random = Math.random): DiceRoll {
   const formulaMatch = formula.trim().toLowerCase().match(/^(\d+)d(\d+)$/);
   const diceCount = Number(formulaMatch?.[1] ?? 1);

@@ -88,8 +88,12 @@ export function useEntityForm(props: EntityManagerProps) {
 
   const savePlayer = async (update: Partial<CharacterEntity>) => {
     if (!props.selectedChar) return;
-    await props.onUpdateCharacter(props.selectedChar.id, update);
-    props.setSelectedChar({ ...props.selectedChar, ...update });
+    const dexterity = update.attributes?.dexterity ?? props.selectedChar.attributes.dexterity;
+    const dexterityModifier = Math.floor((dexterity - 10) / 2);
+    const adjustment = update.playerSheet?.initiativeAdjustment ?? update.npcSheet?.initiativeAdjustment;
+    const normalizedUpdate = adjustment === undefined ? update : { ...update, initiative: dexterityModifier + adjustment };
+    await props.onUpdateCharacter(props.selectedChar.id, normalizedUpdate);
+    props.setSelectedChar({ ...props.selectedChar, ...normalizedUpdate });
     props.setIsEditing(false);
     setLocalEditingCharId(null);
   };
