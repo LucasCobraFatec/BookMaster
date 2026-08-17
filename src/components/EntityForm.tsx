@@ -1,6 +1,7 @@
 import { Save, Trash2, Upload, X } from 'lucide-react';
-import type { ChangeEvent, FormEvent, MouseEvent } from 'react';
+import type { FormEvent, MouseEvent } from 'react';
 import type { CharacterEntity } from '../types/rpg.types';
+import { ImageCropper } from './ImageCropper';
 
 interface EntityFormProps {
   character: CharacterEntity;
@@ -9,7 +10,7 @@ interface EntityFormProps {
   onStartEditing: () => void;
   onSave: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   onDelete: () => Promise<void>;
-  onUploadAvatar: (event: ChangeEvent<HTMLInputElement>) => void;
+  onUploadAvatar: (avatar: string) => void | Promise<void>;
 }
 
 const attributes = [['strength', 'Força'], ['dexterity', 'Destreza'], ['constitution', 'Constituição'], ['intelligence', 'Inteligência'], ['wisdom', 'Sabedoria'], ['charisma', 'Carisma']] as const;
@@ -44,7 +45,7 @@ export function EntityForm({ character, isEditing, onClose, onStartEditing, onSa
   return <div className="bg-rpg-panel border border-rpg-card rounded-xl p-6 relative">
     <form onSubmit={handleSubmit} className="space-y-6">
       <header className="flex flex-col md:flex-row gap-6 items-start border-b border-rpg-card pb-6">
-        <div className="relative w-32 h-32 bg-rpg-card rounded-xl overflow-hidden border border-rpg-card/80 group p-1">{character.avatar ? <img src={character.avatar} alt={character.name} className="w-full h-full object-contain rounded-lg" /> : <div className="h-full grid place-items-center text-rpg-muted">Sem avatar</div>}{isEditing && <label className="absolute inset-0 bg-black/70 hidden group-hover:flex flex-col items-center justify-center cursor-pointer"><Upload className="w-6 h-6 text-white" /><input type="file" accept="image/*" className="hidden" onChange={onUploadAvatar} /></label>}</div>
+        <div className="relative w-32 h-32 bg-rpg-card rounded-xl overflow-hidden border border-rpg-card/80 group p-1">{character.avatar ? <img src={character.avatar} alt={character.name} className="h-full w-full object-cover object-center" /> : <div className="h-full grid place-items-center text-rpg-muted">Sem avatar</div>}{isEditing && <ImageCropper circular label="Selecionar e ajustar avatar" onApply={onUploadAvatar} className="absolute inset-0 hidden cursor-pointer flex-col items-center justify-center bg-black/70 group-hover:flex"><Upload className="w-6 h-6 text-white" /></ImageCropper>}</div>
         <div className="flex-1 w-full">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {isEditing ? <input name="name" required defaultValue={character.name} className="min-w-0 flex-1 bg-rpg-card border border-rpg-accent/30 text-lg font-bold rounded px-3 py-1 text-white" /> : <h2 className="min-w-0 flex-1 truncate text-2xl font-black text-white">{character.name}</h2>}

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import type { CharacterEntity } from '../types/rpg.types';
 import type { EntityManagerProps, EntityType } from '../components/entity.types';
 
@@ -98,17 +98,10 @@ export function useEntityForm(props: EntityManagerProps) {
     setLocalEditingCharId(null);
   };
 
-  const uploadAvatar = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      if (typeof reader.result !== 'string') return;
-      if (!props.selectedChar) { localStorage.setItem(avatarStorageKey, reader.result); return; }
-      await props.onUpdateCharacter(props.selectedChar.id, { avatar: reader.result });
-      props.setSelectedChar({ ...props.selectedChar, avatar: reader.result });
-    };
-    reader.readAsDataURL(file);
+  const uploadAvatar = async (avatar: string) => {
+    if (!props.selectedChar) { localStorage.setItem(avatarStorageKey, avatar); return; }
+    await props.onUpdateCharacter(props.selectedChar.id, { avatar });
+    props.setSelectedChar({ ...props.selectedChar, avatar });
   };
 
   const close = () => { props.setSelectedChar(null); props.setIsEditing(false); setLocalEditingCharId(null); };

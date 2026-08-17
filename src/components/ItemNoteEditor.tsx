@@ -1,5 +1,4 @@
-import { ImagePlus, X } from 'lucide-react';
-import type { ChangeEvent } from 'react';
+import { NoteImageField } from './NoteImageField';
 
 const fields = [
   { key: 'lore', title: 'Lore e História', placeholder: 'Conte a origem, a história e a importância deste item...', rows: 7 },
@@ -32,19 +31,9 @@ export function ItemNoteEditor({ content, onChange }: { content: string; onChang
   const data = parse(content);
   const update = (next: ItemData) => onChange(serialize(next));
   const updateField = (key: FieldKey, value: string) => update({ ...data, values: { ...data.values, [key]: value } });
-  const uploadImage = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => typeof reader.result === 'string' && update({ ...data, image: reader.result });
-    reader.readAsDataURL(file);
-  };
 
   return <div className="space-y-6">
-    <section>
-      <label className="mb-2 block text-sm font-semibold text-emerald-300">Imagem do item</label>
-      {data.image ? <div className="group relative overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950"><img src={data.image} alt="Prévia do item" className="max-h-80 w-full object-contain" /><button type="button" onClick={() => update({ ...data, image: '' })} aria-label="Remover imagem do item" className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-lg bg-zinc-950/85 text-zinc-300 opacity-0 backdrop-blur transition hover:text-rose-400 focus:opacity-100 group-hover:opacity-100"><X className="h-4 w-4" /></button></div> : <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-900/30 text-zinc-500 transition hover:border-emerald-500/60 hover:bg-emerald-500/5 hover:text-emerald-400"><ImagePlus className="mb-2 h-7 w-7" /><span className="text-xs font-semibold">Selecionar imagem do item</span><span className="mt-1 text-[10px]">PNG, JPG, WEBP ou GIF</span><input type="file" accept="image/*" onChange={uploadImage} className="hidden" /></label>}
-    </section>
+    <NoteImageField image={data.image} title="Imagem do item" alt="Prévia do item" onChange={(image) => update({ ...data, image })} />
     {fields.map((field) => <section key={field.key}><label className="mb-2 block text-sm font-semibold text-emerald-300">{field.title}</label><textarea rows={field.rows} value={data.values[field.key]} onChange={(event) => updateField(field.key, event.target.value)} placeholder={field.placeholder} className={controlClass} /></section>)}
   </div>;
 }

@@ -1,5 +1,5 @@
-import { ImagePlus, Plus, Trash2, X } from 'lucide-react';
-import type { ChangeEvent } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
+import { NoteImageField } from './NoteImageField';
 
 const listSections = ['NPCs', 'Combate', 'Encontros Sociais', 'Armadilhas', 'Quebra-Cabeças e Charadas', 'Possíveis Recompensas'] as const;
 type ListTitle = (typeof listSections)[number];
@@ -53,13 +53,6 @@ export function LocationNoteEditor({ content, onChange }: { content: string; onC
   const addItem = (title: ListTitle) => update({ ...data, lists: { ...data.lists, [title]: [...data.lists[title], ''] } });
   const editItem = (title: ListTitle, index: number, value: string) => update({ ...data, lists: { ...data.lists, [title]: data.lists[title].map((item, itemIndex) => itemIndex === index ? value : item) } });
   const deleteItem = (title: ListTitle, index: number) => update({ ...data, lists: { ...data.lists, [title]: data.lists[title].filter((_, itemIndex) => itemIndex !== index) } });
-  const uploadImage = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => typeof reader.result === 'string' && update({ ...data, image: reader.result });
-    reader.readAsDataURL(file);
-  };
 
   const listEditor = (title: ListTitle, placeholder: string) => (
     <section key={title} className="rounded-xl border border-zinc-800 bg-zinc-900/35 p-3">
@@ -70,7 +63,7 @@ export function LocationNoteEditor({ content, onChange }: { content: string; onC
   );
 
   return <div className="space-y-6">
-    <section><label className="mb-2 block text-sm font-semibold text-sky-300">Imagem do local</label>{data.image ? <div className="group relative overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950"><img src={data.image} alt="Prévia do local" className="max-h-80 w-full object-contain" /><button type="button" onClick={() => update({ ...data, image: '' })} aria-label="Remover imagem" className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-lg bg-zinc-950/85 text-zinc-300 opacity-0 backdrop-blur transition hover:text-rose-400 focus:opacity-100 group-hover:opacity-100"><X className="h-4 w-4" /></button></div> : <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-900/30 text-zinc-500 transition hover:border-sky-500/60 hover:bg-sky-500/5 hover:text-sky-400"><ImagePlus className="mb-2 h-7 w-7" /><span className="text-xs font-semibold">Selecionar imagem</span><span className="mt-1 text-[10px]">PNG, JPG, WEBP ou GIF</span><input type="file" accept="image/*" onChange={uploadImage} className="hidden" /></label>}</section>
+    <NoteImageField image={data.image} title="Imagem do local" alt="Prévia do local" onChange={(image) => update({ ...data, image })} />
     <section><label className="mb-2 block text-sm font-semibold text-sky-300">Lore e História</label><textarea rows={8} value={data.lore} onChange={(event) => update({ ...data, lore: event.target.value })} placeholder="Conte a história, origem e importância deste local..." className={controlClass} /></section>
     {listEditor('NPCs', 'Nome ou [[WikiLink]] do NPC...')}
     <div><h3 className="mb-3 border-b border-zinc-800 pb-2 text-sm font-bold uppercase tracking-wider text-sky-400">Encontros</h3><div className="grid gap-3 md:grid-cols-2">{listEditor('Combate', 'Descreva um possível combate...')}{listEditor('Encontros Sociais', 'Descreva um encontro social...')}{listEditor('Armadilhas', 'Descreva uma armadilha...')}{listEditor('Quebra-Cabeças e Charadas', 'Descreva um desafio...')}</div></div>

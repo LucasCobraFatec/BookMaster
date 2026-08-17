@@ -1,6 +1,7 @@
 import { Plus, Save, Trash2, Upload, X } from 'lucide-react';
-import { useState, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import type { CharacterEntity, PlayerSheetData, PlayerSheetRow } from '../types/rpg.types';
+import { ImageCropper } from './ImageCropper';
 import { CharacterLinkedText, CharacterWikiLinksPanel, type CharacterLinkContext } from './CharacterLinkedText';
 
 type Tab = 'attributes' | 'skills' | 'features' | 'magic' | 'personal';
@@ -57,7 +58,6 @@ export function PlayerCharacterSheet({ character, editing, onEdit, onClose, onDe
   const calculatedMaxHp = Math.max(1, sheet.hitDie + (characterLevel - 1) * (Math.floor(sheet.hitDie / 2) + 1) + constitutionModifier * characterLevel);
   const set = (update: Partial<CharacterEntity>) => setDraft((current) => ({ ...current, ...update }));
   const setSheet = (update: Partial<PlayerSheetData>) => setDraft((current) => ({ ...current, playerSheet: { ...current.playerSheet!, ...update } }));
-  const upload = (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => typeof reader.result === 'string' && set({ avatar: reader.result }); reader.readAsDataURL(file); };
   const addRow = (key: 'attacks' | 'spells', defaults: Omit<PlayerSheetRow, 'id'>) => setSheet({ [key]: [...sheet[key], { id: crypto.randomUUID(), ...defaults }] });
   const row = (key: 'attacks' | 'spells', id: string, field: string, value: string | boolean) => setSheet({ [key]: sheet[key].map((item) => item.id === id ? { ...item, [field]: value } : item) });
   const removeRow = (key: 'attacks' | 'spells', id: string) => setSheet({ [key]: sheet[key].filter((item) => item.id !== id) });
@@ -68,7 +68,7 @@ export function PlayerCharacterSheet({ character, editing, onEdit, onClose, onDe
 
   return <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-5">
     <header className="flex flex-col gap-5 border-b border-zinc-800 pb-5 lg:flex-row">
-      <div className="group relative h-40 w-40 shrink-0 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900">{draft.avatar ? <img src={draft.avatar} alt={draft.name} className="h-full w-full object-contain" /> : <div className="grid h-full place-items-center text-xs text-zinc-600">Imagem do jogador</div>}{editing && <label className="absolute inset-0 hidden cursor-pointer place-items-center bg-black/70 group-hover:grid"><Upload className="h-6 w-6" /><input type="file" accept="image/*" onChange={upload} className="hidden" /></label>}</div>
+      <div className="group relative h-40 w-40 shrink-0 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 p-1">{draft.avatar ? <img src={draft.avatar} alt={draft.name} className="h-full w-full object-cover object-center" /> : <div className="grid h-full place-items-center text-xs text-zinc-600">Imagem do jogador</div>}{editing && <ImageCropper circular label="Selecionar e ajustar foto do jogador" onApply={(avatar) => set({ avatar })} className="absolute inset-0 hidden cursor-pointer place-items-center bg-black/70 group-hover:grid"><Upload className="h-6 w-6" /></ImageCropper>}</div>
       <div className="flex-1"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{field('Nome do personagem', 'name')}{field('Nome do jogador', 'playerName')}{field('Antecedente', 'background')}{field('Classe', 'class')}{field('Nível', 'level', 'number')}{field('XP', 'xp', 'number')}{field('Espécie', 'species')}{field('Subclasse', 'subclass')}</div></div>
       <div className="flex shrink-0 gap-2">{editing ? <button onClick={() => onSave({ ...draft, ca: calculatedArmorClass, hpMax: calculatedMaxHp })} className="flex h-9 items-center gap-1 rounded-lg bg-emerald-600 px-3 text-xs font-bold"><Save className="h-4 w-4" />Salvar</button> : <button onClick={onEdit} className="h-9 rounded-lg bg-violet-600 px-3 text-xs font-bold">Editar</button>}<button onClick={onDelete} className="grid h-9 w-9 place-items-center rounded-lg text-rose-400 hover:bg-rose-500/10"><Trash2 className="h-4 w-4" /></button><button onClick={onClose} className="grid h-9 w-9 place-items-center rounded-lg text-zinc-400 hover:bg-zinc-800"><X className="h-4 w-4" /></button></div>
     </header>

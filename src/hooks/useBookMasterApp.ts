@@ -56,8 +56,8 @@ export function useBookMasterApp() {
   const isEditingChar = Boolean(selectedChar && editingCharId === selectedChar.id);
 
   const setIsEditingChar = useCallback(
-    (editing: boolean) => {
-      setEditingCharId(editing ? selectedChar?.id ?? null : null);
+    (editing: boolean, characterId?: string) => {
+      setEditingCharId(editing ? characterId ?? selectedChar?.id ?? null : null);
     },
     [selectedChar?.id],
   );

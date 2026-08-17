@@ -19,16 +19,16 @@ export function EntityManager(props: EntityManagerProps) {
 
   if (props.selectedChar) {
     if (props.selectedChar.type === 'pc') {
-      return <PlayerCharacterSheet key={props.selectedChar.id} character={props.selectedChar} editing={props.isEditing} onEdit={form.startEditing} onClose={form.close} onDelete={async () => { if (!window.confirm('Isso excluirá permanentemente esta ficha. Confirmar?')) return; await props.onDeleteCharacter(props.selectedChar!.id); form.close(); }} onSave={form.savePlayer} linkContext={linkContext} />;
+      return <PlayerCharacterSheet key={props.selectedChar.id} character={props.selectedChar} editing={form.isEditing} onEdit={form.startEditing} onClose={form.close} onDelete={async () => { if (!window.confirm('Isso excluirá permanentemente esta ficha. Confirmar?')) return; await props.onDeleteCharacter(props.selectedChar!.id); form.close(); }} onSave={form.savePlayer} linkContext={linkContext} />;
     }
     if (props.selectedChar.type === 'npc') {
-      return <NpcCharacterSheet key={props.selectedChar.id} character={props.selectedChar} editing={props.isEditing} onEdit={form.startEditing} onClose={form.close} onDelete={async () => { if (!window.confirm('Isso excluirá permanentemente este NPC. Confirmar?')) return; await props.onDeleteCharacter(props.selectedChar!.id); form.close(); }} onSave={form.savePlayer} linkContext={linkContext} />;
+      return <NpcCharacterSheet key={props.selectedChar.id} character={props.selectedChar} editing={form.isEditing} onEdit={form.startEditing} onClose={form.close} onDelete={async () => { if (!window.confirm('Isso excluirá permanentemente este NPC. Confirmar?')) return; await props.onDeleteCharacter(props.selectedChar!.id); form.close(); }} onSave={form.savePlayer} linkContext={linkContext} />;
     }
     if (props.selectedChar.type === 'monster') {
-      return <NpcCharacterSheet key={props.selectedChar.id} monster character={props.selectedChar} editing={props.isEditing} onEdit={form.startEditing} onClose={form.close} onDelete={async () => { if (!window.confirm('Isso excluirá permanentemente este monstro. Confirmar?')) return; await props.onDeleteCharacter(props.selectedChar!.id); form.close(); }} onSave={form.savePlayer} linkContext={linkContext} />;
+      return <NpcCharacterSheet key={props.selectedChar.id} monster character={props.selectedChar} editing={form.isEditing} onEdit={form.startEditing} onClose={form.close} onDelete={async () => { if (!window.confirm('Isso excluirá permanentemente este monstro. Confirmar?')) return; await props.onDeleteCharacter(props.selectedChar!.id); form.close(); }} onSave={form.savePlayer} linkContext={linkContext} />;
     }
     if (props.selectedChar.type === 'villain') {
-      return <NpcCharacterSheet key={props.selectedChar.id} villain monster character={props.selectedChar} editing={props.isEditing} onEdit={form.startEditing} onClose={form.close} onDelete={async () => { if (!window.confirm('Isso excluirá permanentemente este vilão. Confirmar?')) return; await props.onDeleteCharacter(props.selectedChar!.id); form.close(); }} onSave={form.savePlayer} linkContext={linkContext} />;
+      return <NpcCharacterSheet key={props.selectedChar.id} villain monster character={props.selectedChar} editing={form.isEditing} onEdit={form.startEditing} onClose={form.close} onDelete={async () => { if (!window.confirm('Isso excluirá permanentemente este vilão. Confirmar?')) return; await props.onDeleteCharacter(props.selectedChar!.id); form.close(); }} onSave={form.savePlayer} linkContext={linkContext} />;
     }
     return <EntityForm
       key={props.selectedChar.id}

@@ -124,7 +124,7 @@ export default function App() {
       const character = await createCharacter(selectedCampaignId, category.characterType, name);
       handlers.setSelectedRollTableId(null);
       handlers.setSelectedChar(character);
-      handlers.setIsEditingChar(true);
+      handlers.setIsEditingChar(true, character.id);
       handlers.setActiveCenterTab('fichas');
       return;
     }
