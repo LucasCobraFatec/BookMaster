@@ -2,9 +2,9 @@ import type { RollTable } from '../types/rpg.types';
 
 export type ImportedRollTable = Pick<RollTable, 'name' | 'formula' | 'results'>;
 
-const escapeCsv = (value: string | number) => `"${String(value).replaceAll('"', '""')}"`;
+const escapeCsv = (value: string | number | boolean) => `"${String(value).replaceAll('"', '""')}"`;
 
-function isImportedResult(value: unknown): value is { range: [number, number]; text: string } {
+function isImportedResult(value: unknown): value is { range: [number, number]; text: string; weight?: number; locked?: boolean } {
   return Boolean(
     value
       && typeof value === 'object'
@@ -19,7 +19,7 @@ function isImportedResult(value: unknown): value is { range: [number, number]; t
 }
 
 export function exportRollTablesCsv(tables: RollTable[]) {
-  const rows = ['tableName,formula,min,max,text'];
+  const rows = ['tableName,formula,min,max,weight,locked,text'];
 
   tables.forEach((table) => {
     table.results.forEach((result) => {
@@ -28,6 +28,8 @@ export function exportRollTablesCsv(tables: RollTable[]) {
         table.formula,
         result.range[0],
         result.range[1],
+        result.weight ?? Math.max(1, result.range[1] - result.range[0] + 1),
+        Boolean(result.locked),
         result.text,
       ].map(escapeCsv).join(','));
     });
@@ -65,7 +67,12 @@ export function importRollTablesJson(content: string): ImportedRollTable[] {
     const rawResults: unknown[] = 'results' in table && Array.isArray(table.results) ? table.results : [];
     const results = rawResults.flatMap((result) => (
       isImportedResult(result)
-        ? [{ range: [result.range[0], result.range[1]] as [number, number], text: result.text }]
+        ? [{
+          range: [result.range[0], result.range[1]] as [number, number],
+          text: result.text,
+          ...(typeof result.weight === 'number' ? { weight: result.weight } : {}),
+          ...(result.locked === true ? { locked: true } : {}),
+        }]
         : []
     ));
 
@@ -81,13 +88,43 @@ export function importRollTablesCsv(content: string): ImportedRollTable[] {
   const grouped = new Map<string, ImportedRollTable>();
 
   content.split(/\r?\n/).slice(1).filter(Boolean).forEach((line) => {
-    const [name, formula, min, max, text] = csvValues(line);
+    const values = csvValues(line);
+    const legacy = values.length < 7;
+    const [name, formula, min, max] = values;
+    const weight = legacy ? undefined : Number(values[4]);
+    const locked = legacy ? false : values[5].toLocaleLowerCase() === 'true';
+    const text = legacy ? values[4] : values[6];
     if (!name || !text || !Number.isFinite(Number(min)) || !Number.isFinite(Number(max))) return;
 
     const table = grouped.get(name) ?? { name, formula: formula || '1d20', results: [] };
-    table.results.push({ range: [Number(min), Number(max)], text });
+    const legacyWeight = Math.max(1, Number(max) - Number(min) + 1);
+    table.results.push({
+      range: [Number(min), Number(max)],
+      text,
+      ...(Number.isFinite(weight) && (weight !== legacyWeight || locked) ? { weight } : {}),
+      ...(locked ? { locked: true } : {}),
+    });
     grouped.set(name, table);
   });
 
   return [...grouped.values()];
+}
+
+export function importRollTablesText(content: string, tableName = 'Tabela importada'): ImportedRollTable[] {
+  const results = content.split(/\r?\n/).flatMap((rawLine) => {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) return [];
+    const separator = line.indexOf('|');
+    const possibleWeight = separator >= 0 ? Number(line.slice(0, separator).trim()) : 1;
+    const text = (separator >= 0 && Number.isFinite(possibleWeight) ? line.slice(separator + 1) : line).trim();
+    if (!text) return [];
+    return [{ text, weight: Math.max(1, Math.trunc(Number.isFinite(possibleWeight) ? possibleWeight : 1)), locked: false, range: [1, 1] as [number, number] }];
+  });
+  let next = 1;
+  const normalized = results.map((result) => {
+    const range: [number, number] = [next, next + result.weight - 1];
+    next = range[1] + 1;
+    return { ...result, range };
+  });
+  return normalized.length ? [{ name: tableName.trim() || 'Tabela importada', formula: `1d${next - 1}`, results: normalized }] : [];
 }

@@ -5,6 +5,7 @@ import {
   exportRollTablesJson,
   importRollTablesCsv,
   importRollTablesJson,
+  importRollTablesText,
 } from './rollTableTransfer';
 
 const table: RollTable = {
@@ -37,5 +38,17 @@ describe('roll table transfer', () => {
         results: table.results,
       },
     ]);
+  });
+
+  it('imports simple weighted text and plain lines', () => {
+    expect(importRollTablesText('5 | Goblins\n2 | [[Tabela: Tesouros]]\nDescanso seguro', 'Encontros')).toEqual([{
+      name: 'Encontros',
+      formula: '1d8',
+      results: [
+        { range: [1, 5], text: 'Goblins', weight: 5, locked: false },
+        { range: [6, 7], text: '[[Tabela: Tesouros]]', weight: 2, locked: false },
+        { range: [8, 8], text: 'Descanso seguro', weight: 1, locked: false },
+      ],
+    }]);
   });
 });

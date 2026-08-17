@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { MarkdownParser } from './components/MarkdownParser';
 import { RollTableManager } from './components/RollTableManager';
-import { Soundboard } from './components/Soundboard';
 import { EntityManager } from './components/EntityManager';
 import { Sidebar } from './components/Sidebar';
 import { SessionZeroNoteEditor } from './components/SessionZeroNoteEditor';
@@ -12,8 +11,10 @@ import { MapNoteEditor, MapNoteViewer } from './components/MapNoteEditor';
 import { ItemNoteEditor } from './components/ItemNoteEditor';
 import { BattleTracker, type BattleToken } from './components/BattleTracker';
 import { CombatTurnTracker } from './components/CombatTurnTracker';
+import { HelpCenter } from './components/HelpCenter';
 import type { CategoryNode, FileNode, SidebarSectionType } from './components/sidebar.types';
 import { useBookMasterApp } from './hooks/useBookMasterApp';
+import { backupFileName } from './lib/campaignBackup';
 import {
   Plus,
   Trash,
@@ -27,17 +28,18 @@ import {
   Scroll,
   Folder,
   FolderPlus,
-  Volume2,
   TableProperties,
   Save,
   User,
   Swords,
+  HelpCircle,
 } from 'lucide-react';
 
 export default function App() {
   const [battleTrackerOpen, setBattleTrackerOpen] = useState(false);
   const [battleActive, setBattleActive] = useState(false);
   const [battleTokens, setBattleTokens] = useState<BattleToken[]>([]);
+  const [helpOpen, setHelpOpen] = useState(false);
   const {
     campaigns,
     rollTables,
@@ -76,7 +78,10 @@ export default function App() {
     deleteRollTable,
     createCharacter,
     updateCharacter,
+    duplicateCharacter,
     createCampaign,
+    createCampaignBackup,
+    restoreCampaignBackup,
   } = useBookMasterApp();
 
   const sidebarSections = useMemo<SidebarSectionType[]>(() => {
@@ -176,6 +181,39 @@ export default function App() {
     }
   };
 
+  const handleSidebarDuplicate = async (file: FileNode) => {
+    if (file.kind !== 'character') return;
+    const duplicate = await duplicateCharacter(file.id);
+    handlers.setSelectedChar(duplicate);
+    handlers.setIsEditingChar(false);
+    handlers.setActiveCenterTab('fichas');
+  };
+
+  const handleExportCampaign = async () => {
+    if (!selectedCampaignId) return;
+    const backup = await createCampaignBackup(selectedCampaignId);
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = backupFileName(backup.campaign.name);
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportCampaign = async (file: File) => {
+    try {
+      const restored = await restoreCampaignBackup(await file.text());
+      handlers.setSelectedCampaignId(restored.id);
+      handlers.setSelectedNote(null);
+      handlers.setSelectedChar(null);
+      handlers.setSelectedRollTableId(null);
+      window.alert(`Campanha “${restored.name}” restaurada com sucesso.`);
+    } catch (caughtError) {
+      window.alert(caughtError instanceof Error ? caughtError.message : 'Não foi possível importar o backup.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-rpg-bg text-rpg-accent text-lg font-bold animate-pulse">
@@ -218,8 +256,11 @@ export default function App() {
           handlers.setSelectedCampaignId(campaign.id);
         }}
         onDeleteCampaign={handleDeleteCampaign}
+        onExportCampaign={handleExportCampaign}
+        onImportCampaign={handleImportCampaign}
         onSelectFile={handleSidebarSelect}
         onCreateFile={handleSidebarCreate}
+        onDuplicateFile={handleSidebarDuplicate}
         onDeleteFile={handleSidebarDelete}
       />
 
@@ -510,17 +551,6 @@ export default function App() {
               </button>
 
               <button
-                onClick={() => handlers.setActiveCenterTab('som')}
-                className={`px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1.5 transition-all ${
-                  activeCenterTab === 'som'
-                    ? 'bg-rpg-accent/15 text-white border border-rpg-accent/40 shadow-md shadow-rpg-accent/5'
-                    : 'bg-rpg-card/30 border border-transparent text-rpg-muted hover:bg-rpg-card'
-                }`}
-              >
-                <Volume2 className="w-3.5 h-3.5" /> Som do Bardo
-              </button>
-
-              <button
                 onClick={() => handlers.setActiveCenterTab('fichas')}
                 className={`px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1.5 transition-all ${
                   activeCenterTab === 'fichas'
@@ -531,6 +561,7 @@ export default function App() {
                 <User className="w-3.5 h-3.5" /> Fichas & Bestiário
               </button>
               <button onClick={() => setBattleTrackerOpen(true)} className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold transition-all ${battleActive ? 'border border-rose-500/40 bg-rose-500/15 text-rose-300' : 'border border-transparent bg-rpg-card/30 text-rpg-muted hover:bg-rpg-card hover:text-white'}`}><Swords className="h-3.5 w-3.5" />Batalha</button>
+              <button onClick={() => setHelpOpen(true)} className="flex items-center gap-1.5 rounded border border-transparent bg-rpg-card/30 px-3 py-1.5 text-xs font-bold text-rpg-muted transition-all hover:bg-rpg-card hover:text-white"><HelpCircle className="h-3.5 w-3.5" />Ajuda</button>
             </div>
           </div>
 
@@ -540,7 +571,7 @@ export default function App() {
         <div className="flex-1 p-6 overflow-y-auto">
           {activeCenterTab === 'grimorio' && (
             (selectedNote ? (
-              <article className="max-w-3xl mx-auto space-y-6">
+              <article key={selectedNote.id} className="max-w-3xl mx-auto space-y-6">
                 <div className="flex justify-between items-center border-b border-rpg-card/60 pb-4">
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] bg-rpg-accent/15 border border-rpg-accent/40 text-rpg-accent font-bold px-2 py-0.5 rounded-full uppercase">
@@ -669,7 +700,7 @@ export default function App() {
               campaignId={selectedCampaignId}
               rollTables={rollTables}
               activeSessionId={null}
-              onCreateTable={createRollTable}
+              onCreateTable={(name, formula) => createRollTable(selectedCampaignId, name, formula)}
               onUpdateTable={updateRollTable}
               onDeleteTable={deleteRollTable}
               onAddLog={async () => undefined}
@@ -681,12 +712,12 @@ export default function App() {
             />
           )}
 
-          {activeCenterTab === 'som' && <Soundboard />}
-
           {activeCenterTab === 'fichas' && selectedCampaignId && (
             <EntityManager
               campaignId={selectedCampaignId}
               characters={characters}
+              existingNotes={campaignNotes}
+              onWikiLinkClick={handleWikiLinkClick}
               onCreateCharacter={async (type, name, avatar) => {
                 return await createCharacter(selectedCampaignId, type, name, avatar);
               }}
@@ -722,6 +753,7 @@ export default function App() {
       </aside>}
 
       <BattleTracker open={battleTrackerOpen} characters={characters.filter((character) => character.campaignId === selectedCampaignId)} tokens={battleTokens} onTokensChange={setBattleTokens} onClose={() => setBattleTrackerOpen(false)} onStart={() => { setBattleActive(true); handlers.setIsRightSidebarOpen(true); }} />
+      <HelpCenter open={helpOpen} onClose={() => setHelpOpen(false)} />
 
       <div className="md:hidden fixed bottom-4 right-4 flex flex-col gap-2 z-30">
         <button

@@ -60,15 +60,9 @@ export interface RollTable {
   results: {
     range: [number, number]; // Ex: [1, 2] = Goblin, [3, 4] = Lobo
     text: string; // Resultado ou link para nota ex: "Encontro com [[Lobo]]"
+    weight?: number; // Quantidade de resultados do dado atribuídos a esta linha
+    locked?: boolean; // Linhas travadas não participam do sorteio
   }[];
-}
-
-export interface SoundTrack {
-  id: string;
-  name: string; // Ex: "Sons de Taberna"
-  type: 'loop' | 'one-shot';
-  audioUrl: string; // Arquivo local carregado pelo mestre
-  category: 'Ambiente' | 'Combate' | 'Efeito';
 }
 
 export interface CharacterEntity {

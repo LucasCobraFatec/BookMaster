@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RollTable } from '../types/rpg.types';
-import { getRollTableResult, resolveCompositeRoll, resolveRollTableLink, rollDice } from './rollTable';
+import { getRollTableResult, normalizeWeightedResults, resolveCompositeRoll, resolveRollTableLink, rollDice, rollWeightedResult } from './rollTable';
 
 const table: RollTable = {
   id: 'encounters',
@@ -25,6 +25,17 @@ describe('roll tables', () => {
 
   it('uses 1d10 for invalid formulas', () => {
     expect(rollDice('invalid', () => 0)).toEqual({ diceSides: 10, total: 1 });
+  });
+
+  it('calculates intervals from weights and excludes locked rows', () => {
+    const normalized = normalizeWeightedResults([
+      { range: [1, 1], text: 'Comum', weight: 3 },
+      { range: [2, 2], text: 'Travado', weight: 8, locked: true },
+      { range: [3, 3], text: 'Raro', weight: 1 },
+    ]);
+    expect(normalized.formula).toBe('1d4');
+    expect(normalized.results.map((result) => result.range)).toEqual([[1, 3], [0, 0], [4, 4]]);
+    expect(rollWeightedResult({ ...table, results: normalized.results }, () => 0.99).result?.text).toBe('Raro');
   });
 
   it('finds the matching range or reports a missing result', () => {

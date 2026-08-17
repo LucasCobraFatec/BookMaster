@@ -1,5 +1,5 @@
-import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
-import { BookOpen, ChevronDown, ChevronRight, Folder, FolderOpen, Plus, Trash2, X } from 'lucide-react';
+import { useCallback, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { BookOpen, ChevronDown, ChevronRight, Copy, Download, Folder, FolderOpen, Plus, Trash2, Upload, X } from 'lucide-react';
 import { CreateFileDialog } from './CreateFileDialog';
 import type { CategoryNode, FileNode, SidebarAccent, SidebarProps, SidebarSectionType } from './sidebar.types';
 
@@ -10,19 +10,20 @@ const accentStyles: Record<SidebarAccent, { text: string; soft: string; ring: st
   green: { text: 'text-emerald-400', soft: 'hover:bg-emerald-500/10', ring: 'focus-visible:ring-emerald-500' },
 };
 
-function FileItem({ file, active, accent, onSelect, onDelete }: { file: FileNode; active: boolean; accent: SidebarAccent; onSelect: () => void; onDelete: () => void }) {
+function FileItem({ file, active, accent, onSelect, onDuplicate, onDelete }: { file: FileNode; active: boolean; accent: SidebarAccent; onSelect: () => void; onDuplicate?: () => void; onDelete: () => void }) {
   return (
     <div className={`group flex h-8 items-center rounded-md transition-all duration-200 ${active ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100'}`}>
       <button type="button" onClick={onSelect} className={`flex min-w-0 flex-1 items-center gap-2 px-3 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset ${accentStyles[accent].ring}`} aria-current={active ? 'page' : undefined}>
         <span className="min-w-0 flex-1 truncate">{file.name}</span>
         {file.isDraft && <span className="shrink-0 rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-300">Rascunho</span>}
       </button>
+      {onDuplicate && <button type="button" onClick={onDuplicate} aria-label={`Duplicar ${file.name}`} title="Duplicar ficha" className="rounded p-1 text-zinc-500 opacity-0 transition-all hover:bg-sky-500/10 hover:text-sky-400 focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 group-hover:opacity-100"><Copy className="h-3.5 w-3.5" /></button>}
       <button type="button" onClick={onDelete} aria-label={`Excluir ${file.name}`} className="mr-1 rounded p-1 text-zinc-500 opacity-0 transition-all hover:bg-rose-500/10 hover:text-rose-400 focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 group-hover:opacity-100"><Trash2 className="h-3.5 w-3.5" /></button>
     </div>
   );
 }
 
-function SidebarCategory({ category, accent, expanded, selectedItemId, onToggle, onCreate, onSelectFile, onDeleteFile }: { category: CategoryNode; accent: SidebarAccent; expanded: boolean; selectedItemId?: string; onToggle: () => void; onCreate: () => void; onSelectFile: (file: FileNode) => void; onDeleteFile: (file: FileNode) => void }) {
+function SidebarCategory({ category, accent, expanded, selectedItemId, onToggle, onCreate, onSelectFile, onDuplicateFile, onDeleteFile }: { category: CategoryNode; accent: SidebarAccent; expanded: boolean; selectedItemId?: string; onToggle: () => void; onCreate: () => void; onSelectFile: (file: FileNode) => void; onDuplicateFile: (file: FileNode) => void; onDeleteFile: (file: FileNode) => void }) {
   const style = accentStyles[accent];
   return (
     <div>
@@ -38,7 +39,7 @@ function SidebarCategory({ category, accent, expanded, selectedItemId, onToggle,
       <div className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
         <div className="overflow-hidden">
           <div className="ml-[1.7rem] border-l border-zinc-800 pl-2">
-            {category.files.map((file) => <FileItem key={file.id} file={file} active={selectedItemId === file.id} accent={accent} onSelect={() => onSelectFile(file)} onDelete={() => onDeleteFile(file)} />)}
+            {category.files.map((file) => <FileItem key={file.id} file={file} active={selectedItemId === file.id} accent={accent} onSelect={() => onSelectFile(file)} onDuplicate={file.kind === 'character' ? () => onDuplicateFile(file) : undefined} onDelete={() => onDeleteFile(file)} />)}
           </div>
         </div>
       </div>
@@ -46,7 +47,7 @@ function SidebarCategory({ category, accent, expanded, selectedItemId, onToggle,
   );
 }
 
-function SidebarSection({ section, expanded, expandedCategories, selectedItemId, onToggle, onToggleCategory, onCreate, onSelectFile, onDeleteFile }: { section: SidebarSectionType; expanded: boolean; expandedCategories: Set<string>; selectedItemId?: string; onToggle: () => void; onToggleCategory: (id: string) => void; onCreate: (category: CategoryNode) => void; onSelectFile: (file: FileNode) => void; onDeleteFile: (file: FileNode) => void }) {
+function SidebarSection({ section, expanded, expandedCategories, selectedItemId, onToggle, onToggleCategory, onCreate, onSelectFile, onDuplicateFile, onDeleteFile }: { section: SidebarSectionType; expanded: boolean; expandedCategories: Set<string>; selectedItemId?: string; onToggle: () => void; onToggleCategory: (id: string) => void; onCreate: (category: CategoryNode) => void; onSelectFile: (file: FileNode) => void; onDuplicateFile: (file: FileNode) => void; onDeleteFile: (file: FileNode) => void }) {
   const style = accentStyles[section.accent];
   return (
     <section>
@@ -54,7 +55,7 @@ function SidebarSection({ section, expanded, expandedCategories, selectedItemId,
         <span className="min-w-0 flex-1 truncate">{section.label}</span>
         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${expanded ? '' : '-rotate-90'}`} />
       </button>
-      <div className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}><div className="overflow-hidden space-y-0.5">{section.categories.map((category) => <SidebarCategory key={category.id} category={category} accent={section.accent} expanded={expandedCategories.has(category.id)} selectedItemId={selectedItemId} onToggle={() => onToggleCategory(category.id)} onCreate={() => onCreate(category)} onSelectFile={onSelectFile} onDeleteFile={onDeleteFile} />)}</div></div>
+      <div className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}><div className="overflow-hidden space-y-0.5">{section.categories.map((category) => <SidebarCategory key={category.id} category={category} accent={section.accent} expanded={expandedCategories.has(category.id)} selectedItemId={selectedItemId} onToggle={() => onToggleCategory(category.id)} onCreate={() => onCreate(category)} onSelectFile={onSelectFile} onDuplicateFile={onDuplicateFile} onDeleteFile={onDeleteFile} />)}</div></div>
     </section>
   );
 }
@@ -63,6 +64,7 @@ export function Sidebar(props: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set(props.sections.map((section) => section.id)));
   const [expandedCategories, setExpandedCategories] = useState(() => new Set(props.sections.flatMap((section) => section.categories.map((category) => category.id))));
   const [dialog, setDialog] = useState<{ type: 'campaign' } | { type: 'file'; category: CategoryNode } | null>(null);
+  const backupInputRef = useRef<HTMLInputElement>(null);
   const closeDialog = useCallback(() => setDialog(null), []);
   const toggleSet = (setter: Dispatch<SetStateAction<Set<string>>>, id: string) => setter((current) => {
     const next = new Set(current);
@@ -88,9 +90,14 @@ export function Sidebar(props: SidebarProps) {
             <button type="button" onClick={() => setDialog({ type: 'campaign' })} aria-label="Criar campanha" title="Criar campanha" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-violet-600 text-white transition-all hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"><Plus className="h-4 w-4" /></button>
             {props.onDeleteCampaign && props.selectedCampaignId && props.campaigns.length > 1 && <button type="button" onClick={props.onDeleteCampaign} aria-label="Excluir campanha ativa" title="Excluir campanha ativa" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-rose-500/20 text-rose-400 transition hover:bg-rose-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"><Trash2 className="h-4 w-4" /></button>}
           </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button type="button" disabled={!props.selectedCampaignId} onClick={props.onExportCampaign} className="flex h-9 items-center justify-center gap-2 rounded-lg border border-emerald-500/25 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-500/10 disabled:opacity-40"><Download className="h-3.5 w-3.5" />Exportar backup</button>
+            <button type="button" onClick={() => backupInputRef.current?.click()} className="flex h-9 items-center justify-center gap-2 rounded-lg border border-sky-500/25 text-[10px] font-bold text-sky-300 transition hover:bg-sky-500/10"><Upload className="h-3.5 w-3.5" />Importar backup</button>
+            <input ref={backupInputRef} type="file" accept=".json,application/json" className="hidden" onChange={async (event) => { const file = event.target.files?.[0]; event.target.value = ''; if (file) await props.onImportCampaign(file); }} />
+          </div>
         </div>
         <nav className="scrollbar-thin flex-1 space-y-3 overflow-y-auto px-3 py-4">
-          {props.sections.map((section) => <SidebarSection key={section.id} section={section} expanded={expandedSections.has(section.id)} expandedCategories={expandedCategories} selectedItemId={props.selectedItemId} onToggle={() => toggleSet(setExpandedSections, section.id)} onToggleCategory={(id) => toggleSet(setExpandedCategories, id)} onCreate={(category) => setDialog({ type: 'file', category })} onSelectFile={props.onSelectFile} onDeleteFile={props.onDeleteFile} />)}
+          {props.sections.map((section) => <SidebarSection key={section.id} section={section} expanded={expandedSections.has(section.id)} expandedCategories={expandedCategories} selectedItemId={props.selectedItemId} onToggle={() => toggleSet(setExpandedSections, section.id)} onToggleCategory={(id) => toggleSet(setExpandedCategories, id)} onCreate={(category) => setDialog({ type: 'file', category })} onSelectFile={props.onSelectFile} onDuplicateFile={props.onDuplicateFile} onDeleteFile={props.onDeleteFile} />)}
         </nav>
       </aside>
       <CreateFileDialog open={Boolean(dialog)} title={dialog?.type === 'campaign' ? 'Nova campanha' : `Novo item em ${dialog?.category.label ?? ''}`} description={dialog?.type === 'campaign' ? 'Crie um novo espaço para sua aventura.' : `Informe o nome do novo ${dialog?.category.createLabel.toLowerCase() ?? 'item'}.`} onClose={closeDialog} onCreate={async (name) => { if (dialog?.type === 'campaign') await props.onCreateCampaign(name); else if (dialog?.type === 'file') await props.onCreateFile(dialog.category, name); }} />

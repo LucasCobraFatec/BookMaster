@@ -18,6 +18,22 @@ export function useEntities(campaignId: string) {
   };
 
   const updateCharacter = async (id: string, updates: Partial<CharacterEntity>): Promise<void> => { await db.characters.update(id, { ...updates, isDraft: false }); };
+  const duplicateCharacter = async (id: string): Promise<CharacterEntity> => {
+    const source = await db.characters.get(id);
+    if (!source) throw new Error('Ficha não encontrada para duplicação.');
+    const campaignCharacters = await db.characters.where('campaignId').equals(source.campaignId).toArray();
+    let name = `${source.name} (Cópia)`;
+    let copyNumber = 2;
+    while (campaignCharacters.some((character) => character.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase())) {
+      name = `${source.name} (Cópia ${copyNumber})`;
+      copyNumber += 1;
+    }
+    const duplicate = structuredClone(source);
+    duplicate.id = crypto.randomUUID();
+    duplicate.name = name;
+    await db.characters.add(duplicate);
+    return duplicate;
+  };
   const deleteCharacter = async (id: string): Promise<void> => { await db.characters.delete(id); };
-  return { characters, loading: query === undefined, getCharactersByCampaign: (id: string) => characters.filter((character) => character.campaignId === id), createCharacter, updateCharacter, deleteCharacter };
+  return { characters, loading: query === undefined, getCharactersByCampaign: (id: string) => characters.filter((character) => character.campaignId === id), createCharacter, updateCharacter, duplicateCharacter, deleteCharacter };
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { RollTable } from '../types/rpg.types';
-import { resolveCompositeRoll } from '../lib/rollTable';
+import { normalizeWeightedResults, resolveCompositeRoll, resultWeight } from '../lib/rollTable';
 
 interface UseRollTableManagerOptions {
   onUpdateTable: (tableId: string, updates: Partial<RollTable>) => Promise<void>;
@@ -24,7 +24,7 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
   const [state, setState] = useState<RollTableState>({
     selectedTable: initialTable,
     newTableName: '',
-    newTableFormula: '1d10',
+    newTableFormula: '1d1',
     newMin: 1,
     newMax: 1,
     newText: '',
@@ -58,7 +58,7 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
     setState((prev) => ({
       ...prev,
       newTableName: '',
-      newTableFormula: '1d10',
+      newTableFormula: '1d1',
     }));
   };
 
@@ -101,15 +101,27 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
 
   const deleteResultRow = async (index: number) => {
     if (!state.selectedTable) return;
-    const updatedResults = state.selectedTable.results.filter((_, resultIndex) => resultIndex !== index);
-    await options.onUpdateTable(state.selectedTable.id, { results: updatedResults });
-    setState((prev) => ({
-      ...prev,
-      selectedTable: prev.selectedTable
-        ? { ...prev.selectedTable, results: updatedResults }
-        : null,
-    }));
+    await persistResults(state.selectedTable.results.filter((_, resultIndex) => resultIndex !== index));
   };
+
+  const persistResults = async (results: RollTable['results']) => {
+    if (!state.selectedTable) return;
+    const normalized = normalizeWeightedResults(results);
+    setState((prev) => ({ ...prev, selectedTable: prev.selectedTable ? { ...prev.selectedTable, ...normalized } : null }));
+    await options.onUpdateTable(state.selectedTable.id, normalized);
+  };
+
+  const addBlankResultRow = async () => {
+    if (!state.selectedTable) return;
+    await persistResults([...state.selectedTable.results, { text: '', weight: 1, locked: false, range: [1, 1] }]);
+  };
+
+  const updateResultRow = async (index: number, patch: Partial<RollTable['results'][number]>) => {
+    if (!state.selectedTable) return;
+    await persistResults(state.selectedTable.results.map((result, resultIndex) => resultIndex === index ? { ...result, weight: resultWeight(result), ...patch } : result));
+  };
+
+  const closeRollResult = () => setState((prev) => ({ ...prev, rollingResult: null, rolledNumber: null }));
 
   const rollTable = (activeSessionId: string | null) => {
     if (!state.selectedTable || state.selectedTable.results.length === 0) return;
@@ -153,6 +165,9 @@ export const useRollTableManager = (options: UseRollTableManagerOptions, tables:
     updateNewResultText,
     addResultRow,
     deleteResultRow,
+    addBlankResultRow,
+    updateResultRow,
+    closeRollResult,
     rollTable,
   };
 };

@@ -8,7 +8,6 @@ BookMaster é uma aplicação local para organizar e conduzir campanhas de RPG d
 - Fichas para personagens, NPCs, monstros e vilões.
 - Timeline de sessões e registros destacados.
 - Tabelas de rolagem com fórmulas como `1d20` e `2d6`.
-- Soundboard com efeitos e ambientes gerados pelo Web Audio API.
 
 ## Tecnologias
 
@@ -36,6 +35,14 @@ npm run build
 ```
 
 Os testes cobrem a resolução de wiki-links e a lógica de rolagem. A build de produção é gravada em `dist/`.
+
+## Versão portátil para Windows
+
+```bash
+npm run build:portable
+```
+
+O ZIP é criado em `release/BookMaster-Portable-1.0.0-Windows.zip`. Ele não exige instalação: basta extrair todo o conteúdo e abrir `BookMaster.exe`. Ao ser aberto, cria a pasta `BookMaster-data` ao lado do executável; mantenha essa pasta junto do programa para preservar as campanhas ao mover ou atualizar o BookMaster.
 
 ## Dados locais e migrações
 

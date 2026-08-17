@@ -11,6 +11,34 @@ export interface CompositeRoll {
   trail: string[];
 }
 
+export type RollTableResult = RollTable['results'][number];
+
+export function resultWeight(result: RollTableResult): number {
+  const legacyWeight = Math.max(1, result.range[1] - result.range[0] + 1);
+  return Math.max(1, Math.trunc(result.weight ?? legacyWeight));
+}
+
+export function normalizeWeightedResults(results: RollTableResult[]): { results: RollTableResult[]; formula: string } {
+  let nextValue = 1;
+  const normalized = results.map((result) => {
+    const weight = resultWeight(result);
+    if (result.locked) return { ...result, weight, range: [0, 0] as [number, number] };
+    const range: [number, number] = [nextValue, nextValue + weight - 1];
+    nextValue = range[1] + 1;
+    return { ...result, weight, range };
+  });
+  return { results: normalized, formula: `1d${Math.max(1, nextValue - 1)}` };
+}
+
+export function rollWeightedResult(table: RollTable, random = Math.random): { total: number; result?: RollTableResult } {
+  const normalized = normalizeWeightedResults(table.results);
+  const activeResults = normalized.results.filter((result) => !result.locked);
+  const totalWeight = activeResults.reduce((sum, result) => sum + resultWeight(result), 0);
+  if (!totalWeight) return { total: 0 };
+  const total = Math.floor(random() * totalWeight) + 1;
+  return { total, result: activeResults.find((result) => total >= result.range[0] && total <= result.range[1]) };
+}
+
 export function getRollTableLinkName(rawTitle: string): string | undefined {
   const match = rawTitle.trim().match(/^tabela\s*:\s*(.+)$/i);
   return match?.[1].trim() || undefined;
@@ -59,8 +87,8 @@ export function resolveCompositeRoll(
   }
 
   const nextVisited = new Set(visited).add(table.id);
-  const roll = rollDice(table.formula, random);
-  let result = getRollTableResult(table, roll.total);
+  const roll = rollWeightedResult(table, random);
+  let result = roll.result?.text ?? 'Nenhum resultado correspondente.';
   const trail = [`${table.name}: ${roll.total}`];
   const references = [...result.matchAll(/\[\[Tabela:\s*([^\]]+)\]\]/gi)];
 

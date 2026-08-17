@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
 import type { Campaign } from '../types/rpg.types';
+import { createCampaignBackup, restoreCampaignBackup } from '../lib/campaignBackup';
 
 export function useCampaigns() {
   const query = useLiveQuery(() => db.campaigns.orderBy('createdAt').toArray());
@@ -24,5 +25,5 @@ export function useCampaigns() {
     });
   };
 
-  return { campaigns, loading: query === undefined, createCampaign, deleteCampaign };
+  return { campaigns, loading: query === undefined, createCampaign, deleteCampaign, createCampaignBackup, restoreCampaignBackup };
 }

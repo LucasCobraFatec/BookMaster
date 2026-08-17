@@ -4,7 +4,7 @@ import { useRPGDatabase } from './useRPGDatabase';
 import { parseWikiLinkTarget, resolveWikiLinkTarget } from '../lib/wikiLinks';
 import { getRollTableLinkName, resolveRollTableLink } from '../lib/rollTable';
 
-export type CenterTab = 'grimorio' | 'tabelas' | 'som' | 'fichas';
+export type CenterTab = 'grimorio' | 'tabelas' | 'fichas';
 
 export function useBookMasterApp() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>('');
@@ -18,6 +18,8 @@ export function useBookMasterApp() {
     error,
     createCampaign,
     deleteCampaign,
+    createCampaignBackup,
+    restoreCampaignBackup,
     createNote,
     updateNote,
     deleteNote,
@@ -33,6 +35,7 @@ export function useBookMasterApp() {
     deleteRollTable,
     createCharacter,
     updateCharacter,
+    duplicateCharacter,
     deleteCharacter,
   } = useRPGDatabase(selectedCampaignId);
 
@@ -438,6 +441,8 @@ export function useBookMasterApp() {
     handlers,
     createCampaign,
     deleteCampaign,
+    createCampaignBackup,
+    restoreCampaignBackup,
     createNote,
     updateNote,
     deleteNote,
@@ -453,6 +458,7 @@ export function useBookMasterApp() {
     deleteRollTable,
     createCharacter,
     updateCharacter,
+    duplicateCharacter,
     deleteCharacter,
     handleCreateCampaign,
     handleCreateNote,

@@ -47,7 +47,10 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
 
   const handleCreateTable = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manager.state.newTableName.trim()) return;
+    if (!manager.state.newTableName.trim()) {
+      window.alert('Informe um nome para a tabela.');
+      return;
+    }
     const created = await onCreateTable(manager.state.newTableName.trim(), manager.state.newTableFormula);
     selectTable(created);
     manager.resetNewTableForm();
@@ -78,9 +81,7 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
         campaignTables={campaignTables}
         selectedTableId={manager.state.selectedTable?.id ?? null}
         newTableName={manager.state.newTableName}
-        newTableFormula={manager.state.newTableFormula}
         onNewTableNameChange={manager.updateNewTableName}
-        onNewTableFormulaChange={manager.updateNewTableFormula}
         onCreateTable={handleCreateTable}
         onSelectTable={selectTable}
         onDeleteTable={handleDeleteTable}
@@ -94,24 +95,17 @@ export const RollTableManager: React.FC<RollTableManagerProps> = ({
           existingNotes={existingNotes}
           existingCharacters={existingCharacters}
           onWikiLinkClick={onWikiLinkClick}
+          onClose={manager.closeRollResult}
         />
 
         <RollTableEditor
           selectedTable={manager.state.selectedTable}
           isRolling={manager.state.isRolling}
-          newMin={manager.state.newMin}
-          newMax={manager.state.newMax}
-          newText={manager.state.newText}
           transferControls={<RollTableTransfer tables={campaignTables} onImport={handleImportTables} />}
-          onNewMinChange={manager.updateNewResultMin}
-          onNewMaxChange={manager.updateNewResultMax}
-          onNewTextChange={manager.updateNewResultText}
-          onAddResult={manager.addResultRow}
+          onAddResult={manager.addBlankResultRow}
+          onUpdateResult={manager.updateResultRow}
           onDeleteResult={manager.deleteResultRow}
           onRoll={handleRollTable}
-          existingNotes={existingNotes}
-          existingCharacters={existingCharacters}
-          onWikiLinkClick={onWikiLinkClick}
         />
       </div>
     </div>

@@ -6,9 +6,7 @@ interface RollTableListProps {
   campaignTables: RollTable[];
   selectedTableId: string | null;
   newTableName: string;
-  newTableFormula: string;
   onNewTableNameChange: (name: string) => void;
-  onNewTableFormulaChange: (formula: string) => void;
   onCreateTable: (e: React.FormEvent) => Promise<void>;
   onSelectTable: (table: RollTable) => void;
   onDeleteTable: (table: RollTable) => Promise<void>;
@@ -18,9 +16,7 @@ export const RollTableList: React.FC<RollTableListProps> = ({
   campaignTables,
   selectedTableId,
   newTableName,
-  newTableFormula,
   onNewTableNameChange,
-  onNewTableFormulaChange,
   onCreateTable,
   onSelectTable,
   onDeleteTable,
@@ -39,20 +35,7 @@ export const RollTableList: React.FC<RollTableListProps> = ({
           onChange={(e) => onNewTableNameChange(e.target.value)}
           className="w-full bg-rpg-card border border-rpg-card/85 text-xs rounded p-2 text-white outline-none focus:border-rpg-accent"
         />
-        <div className="flex gap-2">
-          <select
-            value={newTableFormula}
-            onChange={(e) => onNewTableFormulaChange(e.target.value)}
-            className="flex-1 bg-rpg-card border border-rpg-card/85 text-xs rounded p-1.5 text-white outline-none cursor-pointer"
-          >
-            <option value="1d4">🎲 1d4</option>
-            <option value="1d6">🎲 1d6</option>
-            <option value="1d8">🎲 1d8</option>
-            <option value="1d10">🎲 1d10</option>
-            <option value="1d12">🎲 1d12</option>
-            <option value="1d20">🎲 1d20</option>
-            <option value="1d100">🎲 1d100</option>
-          </select>
+        <div className="flex justify-end">
           <button
             type="submit"
             className="bg-rpg-accent hover:bg-rpg-accent/80 text-white p-2 rounded text-xs flex items-center gap-1.5 transition-all"

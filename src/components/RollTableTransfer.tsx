@@ -1,71 +1,31 @@
-import { Download, Upload } from 'lucide-react';
-import type { ChangeEvent } from 'react';
+import { Download, FileJson, FileSpreadsheet, Upload, X } from 'lucide-react';
+import { useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { createPortal } from 'react-dom';
 import type { RollTable } from '../types/rpg.types';
 import type { ImportedRollTable } from '../lib/rollTableTransfer';
-import {
-  exportRollTablesCsv,
-  exportRollTablesJson,
-  importRollTablesCsv,
-  importRollTablesJson,
-} from '../lib/rollTableTransfer';
+import { exportRollTablesCsv, exportRollTablesJson, importRollTablesCsv, importRollTablesJson, importRollTablesText } from '../lib/rollTableTransfer';
 
-interface RollTableTransferProps {
-  tables: RollTable[];
-  onImport: (tables: ImportedRollTable[]) => Promise<void>;
-}
+interface Props { tables: RollTable[]; onImport: (tables: ImportedRollTable[]) => Promise<void>; }
+type Format = 'text' | 'json' | 'csv';
 
 function download(name: string, content: string, type: string) {
   const url = URL.createObjectURL(new Blob([content], { type }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = name;
-  link.click();
-  URL.revokeObjectURL(url);
+  const link = document.createElement('a'); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url);
 }
 
-export function RollTableTransfer({ tables, onImport }: RollTableTransferProps) {
-  const importFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+export function RollTableTransfer({ tables, onImport }: Props) {
+  const [open, setOpen] = useState(false), [format, setFormat] = useState<Format>('text'), [content, setContent] = useState(''), [tableName, setTableName] = useState('Tabela importada'), [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const parsed = useMemo(() => {
     try {
-      const content = await file.text();
-      const imported = file.name.toLocaleLowerCase().endsWith('.json')
-        ? importRollTablesJson(content)
-        : importRollTablesCsv(content);
+      const tables = !content.trim() ? [] : format === 'json' ? importRollTablesJson(content) : format === 'csv' ? importRollTablesCsv(content) : importRollTablesText(content, tableName);
+      return { tables, error: '' };
+    } catch (error) { return { tables: [] as ImportedRollTable[], error: error instanceof Error ? error.message : 'Conteúdo inválido.' }; }
+  }, [content, format, tableName]);
+  const rows = parsed.tables.reduce((sum, table) => sum + table.results.length, 0);
+  const close = () => { setOpen(false); setContent(''); setFormat('text'); setTableName('Tabela importada'); };
+  const readFile = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; const extension = file.name.split('.').at(-1)?.toLocaleLowerCase(); setFormat(extension === 'json' ? 'json' : extension === 'csv' ? 'csv' : 'text'); setContent(await file.text()); if (extension === 'txt') setTableName(file.name.replace(/\.txt$/i, '')); event.target.value = ''; };
+  const submit = async () => { if (!parsed.tables.length) return; setBusy(true); try { await onImport(parsed.tables); close(); } finally { setBusy(false); } };
 
-      if (!imported.length) throw new Error('Nenhuma tabela valida foi encontrada no arquivo.');
-      await onImport(imported);
-    } catch (error) {
-      window.alert(error instanceof Error ? error.message : 'Nao foi possivel importar o arquivo.');
-    }
-
-    event.target.value = '';
-  };
-
-  return (
-    <div className="flex flex-wrap gap-2 border-t border-rpg-card/40 pt-3">
-      <button
-        type="button"
-        onClick={() => download('tabelas-rpg.json', exportRollTablesJson(tables), 'application/json')}
-        className="text-[10px] text-rpg-muted hover:text-white flex items-center gap-1"
-      >
-        <Download className="w-3.5 h-3.5" />
-        JSON
-      </button>
-      <button
-        type="button"
-        onClick={() => download('tabelas-rpg.csv', exportRollTablesCsv(tables), 'text/csv;charset=utf-8')}
-        className="text-[10px] text-rpg-muted hover:text-white flex items-center gap-1"
-      >
-        <Download className="w-3.5 h-3.5" />
-        CSV
-      </button>
-      <label className="cursor-pointer text-[10px] text-rpg-accent hover:text-white flex items-center gap-1">
-        <Upload className="w-3.5 h-3.5" />
-        Importar
-        <input type="file" accept=".json,.csv,application/json,text/csv" className="hidden" onChange={importFile} />
-      </label>
-    </div>
-  );
+  return <><div className="flex flex-wrap gap-3 border-t border-rpg-card/40 pt-3"><button type="button" onClick={() => download('tabelas-rpg.json', exportRollTablesJson(tables), 'application/json')} className="flex items-center gap-1 text-[10px] text-rpg-muted hover:text-white"><Download className="h-3.5 w-3.5" />Exportar JSON</button><button type="button" onClick={() => download('tabelas-rpg.csv', exportRollTablesCsv(tables), 'text/csv;charset=utf-8')} className="flex items-center gap-1 text-[10px] text-rpg-muted hover:text-white"><Download className="h-3.5 w-3.5" />Exportar CSV</button><button type="button" onClick={() => setOpen(true)} className="flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-1 text-[10px] font-bold text-violet-300 hover:bg-violet-500/20"><Upload className="h-3.5 w-3.5" />Importar tabelas</button></div>{open && createPortal(<div className="fixed inset-0 z-[9999] grid place-items-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && close()}><div role="dialog" aria-modal="true" aria-label="Importar tabelas" className="my-auto w-full max-w-3xl rounded-2xl border border-violet-500/30 bg-zinc-950 shadow-2xl"><header className="flex items-start justify-between border-b border-zinc-800 p-5"><div><h2 className="font-black text-white">Importar tabelas</h2><p className="mt-1 text-xs text-zinc-500">Envie JSON/CSV ou cole uma lista simples com peso e descrição.</p></div><button type="button" onClick={close} aria-label="Fechar"><X className="h-5 w-5" /></button></header><div className="space-y-5 p-5"><div className="grid gap-2 sm:grid-cols-3">{([['text','Texto colado'],['json','JSON'],['csv','CSV']] as Array<[Format,string]>).map(([id,label]) => <button key={id} type="button" onClick={() => { setFormat(id); setContent(''); }} className={`rounded-lg border px-3 py-2 text-xs font-bold ${format === id ? 'border-violet-400 bg-violet-500/15 text-violet-200' : 'border-zinc-800 text-zinc-500 hover:border-zinc-600'}`}>{label}</button>)}</div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => fileRef.current?.click()} className="flex items-center gap-2 rounded-lg border border-zinc-700 px-4 py-2 text-xs font-bold text-zinc-300 hover:bg-zinc-900">{format === 'json' ? <FileJson className="h-4 w-4" /> : <FileSpreadsheet className="h-4 w-4" />}Selecionar arquivo</button><input ref={fileRef} type="file" accept=".json,.csv,.txt,application/json,text/csv,text/plain" onChange={readFile} className="hidden" /></div>{format === 'text' && <label className="block"><span className="mb-1 block text-xs font-bold text-zinc-400">Nome da tabela</span><input value={tableName} onChange={(event) => setTableName(event.target.value)} className="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-white outline-none focus:border-violet-500" /></label>}<label className="block"><span className="mb-1 block text-xs font-bold text-zinc-400">{format === 'text' ? 'Cole uma linha por resultado' : `Conteúdo ${format.toUpperCase()}`}</span><textarea value={content} onChange={(event) => setContent(event.target.value)} rows={10} placeholder={format === 'text' ? '5 | Encontro com goblins\n2 | Comerciante viajante\n1 | [[Tabela: Tesouros]]' : format === 'json' ? '[{"name":"Tesouros","results":[...]}]' : 'tableName,formula,min,max,weight,locked,text'} className="mt-1 w-full resize-y rounded-xl border border-zinc-700 bg-zinc-900 p-3 font-mono text-xs leading-5 text-white outline-none focus:border-violet-500" /></label><section className={`rounded-xl border p-4 ${parsed.error ? 'border-rose-500/30 bg-rose-500/5' : parsed.tables.length ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-zinc-800 bg-zinc-900/40'}`}><h3 className="text-xs font-black uppercase text-zinc-400">Prévia</h3>{parsed.error ? <p className="mt-2 text-xs text-rose-300">{parsed.error}</p> : parsed.tables.length ? <><p className="mt-2 text-sm font-bold text-emerald-300">{parsed.tables.length} tabela(s) e {rows} linha(s) reconhecidas</p><ul className="mt-2 max-h-28 overflow-y-auto text-xs text-zinc-400">{parsed.tables.map((table) => <li key={table.name}>{table.name} — {table.results.length} resultados — {table.formula}</li>)}</ul></> : <p className="mt-2 text-xs text-zinc-500">Insira conteúdo para visualizar o que será importado.</p>}</section></div><footer className="flex justify-end gap-2 border-t border-zinc-800 p-4"><button type="button" onClick={close} className="rounded-lg px-4 py-2 text-xs font-bold text-zinc-400 hover:bg-zinc-900">Cancelar</button><button type="button" onClick={submit} disabled={!parsed.tables.length || busy} className="rounded-lg bg-violet-600 px-5 py-2 text-xs font-black text-white disabled:opacity-40">{busy ? 'Importando...' : `Importar ${parsed.tables.length || ''} tabela(s)`}</button></footer></div></div>, document.body)}</>;
 }

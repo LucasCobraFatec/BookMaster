@@ -39,7 +39,10 @@ export interface SidebarProps {
   onSelectCampaign: (campaignId: string) => void;
   onCreateCampaign: (name: string) => Promise<void> | void;
   onDeleteCampaign?: () => Promise<void> | void;
+  onExportCampaign: () => Promise<void> | void;
+  onImportCampaign: (file: File) => Promise<void> | void;
   onSelectFile: (file: FileNode) => void;
   onCreateFile: (category: CategoryNode, name: string) => Promise<void> | void;
+  onDuplicateFile: (file: FileNode) => Promise<void> | void;
   onDeleteFile: (file: FileNode) => Promise<void> | void;
 }
